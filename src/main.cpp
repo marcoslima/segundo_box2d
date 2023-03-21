@@ -18,6 +18,62 @@ sf::Texture loadTexture(const std::string& path)
     }
     return texture;
 }
+
+class ButtonSprite 
+{
+private:
+    sf::Texture texture;
+    sf::Sprite sprite;
+
+private:
+
+
+public:
+    ButtonSprite() {}
+    ButtonSprite(const std::string& path) {
+        texture = loadTexture(path);
+        sprite.setTexture(texture);
+        sprite.setScale(0.5f, 0.5f);
+    }
+
+    ButtonSprite(const ButtonSprite& other) {
+        texture = other.texture;
+        sprite.setTexture(texture);
+        sprite.setScale(0.5f, 0.5f);
+    }
+    ButtonSprite& operator=(const ButtonSprite& other) {
+        texture = other.texture;
+        sprite.setTexture(texture);
+        sprite.setScale(0.5f, 0.5f);
+        return *this;
+    }
+
+    bool draw(bool selected = false) {
+        if (selected) {
+            float h, s, v;
+            ImVec4 bc = ImGui::GetStyleColorVec4(ImGuiCol_Button);
+            ImGui::ColorConvertRGBtoHSV(bc.x, bc.y, bc.z, h, s, v);
+            ImGui::PushStyleColor(ImGuiCol_Button,        (ImVec4)ImColor::HSV(h, s, v));
+
+            bc = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
+            ImGui::ColorConvertRGBtoHSV(bc.x, bc.y, bc.z, h, s, v);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(h, s, v));
+
+            bc = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
+            ImGui::ColorConvertRGBtoHSV(bc.x, bc.y, bc.z, h, s, v);
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive,  (ImVec4)ImColor::HSV(h, s, v));
+        }
+
+        bool result = ImGui::ImageButton(sprite);
+        ImGui::SameLine();
+
+        if (selected) {
+            ImGui::PopStyleColor(3);
+        }
+        return result;
+    }
+};
+
 int main() {
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "Box2D - segundo");
     window.setFramerateLimit(60);
