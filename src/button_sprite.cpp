@@ -3,7 +3,7 @@
 #include <SFML/Window.hpp>
 #include <iostream>
 #include <map>
-#include <toolbox.h>
+
 
 #include <button_sprite.h>
 
@@ -36,27 +36,35 @@ ButtonSprite& ButtonSprite::operator=(const ButtonSprite& other) {
     return *this;
 }
 
+void ShiftButtonColor(ImGuiCol color)
+{
+    ImGui::PushStyleColor(color, ImVec4(1, 1, 1, 1));
+}
+
+void ShiftButtonHoveredColor(ImGuiCol color)
+{
+    ImGui::PushStyleColor(color, ImVec4(0.8f, 0.8f, 0.8f, 1));
+}
+
+void ShiftButtonActiveColor(ImGuiCol color)
+{
+    ImGui::PushStyleColor(color, ImVec4(0.6f, 0.6f, 0.6f, 1));
+}
+
+void ShiftButtonColors()
+{
+    ShiftButtonColor(ImGuiCol_Button);
+    ShiftButtonHoveredColor(ImGuiCol_ButtonHovered);
+    ShiftButtonActiveColor(ImGuiCol_ButtonActive);
+}
+
 bool ButtonSprite::draw(bool selected) {
-    if (selected) {
-        float h, s, v;
-        ImVec4 bc = ImGui::GetStyleColorVec4(ImGuiCol_Button);
-        ImGui::ColorConvertRGBtoHSV(bc.x, bc.y, bc.z, h, s, v);
-        ImGui::PushStyleColor(ImGuiCol_Button,        (ImVec4)ImColor::HSV(h, s, v));
-
-        bc = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
-        ImGui::ColorConvertRGBtoHSV(bc.x, bc.y, bc.z, h, s, v);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(h, s, v));
-
-        bc = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
-        ImGui::ColorConvertRGBtoHSV(bc.x, bc.y, bc.z, h, s, v);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  (ImVec4)ImColor::HSV(h, s, v));
-    }
+    if (selected) ShiftButtonColors();
 
     bool result = ImGui::ImageButton(sprite);
     ImGui::SameLine();
 
-    if (selected) {
-        ImGui::PopStyleColor(3);
-    }
+    if (selected) ImGui::PopStyleColor(3);
+
     return result;
 }
