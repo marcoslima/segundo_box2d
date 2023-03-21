@@ -4,9 +4,20 @@
 
 #include <SFML/Graphics/CircleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/Texture.hpp>
+#include <SFML/Graphics/Sprite.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/Event.hpp>
 
+sf::Texture loadTexture(const std::string& path)
+{
+    sf::Texture texture;
+    if (!texture.loadFromFile(path))
+    {
+        std::cout << "Error loading texture: " << path << std::endl;
+    }
+    return texture;
+}
 int main() {
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "Box2D - segundo");
     window.setFramerateLimit(60);
