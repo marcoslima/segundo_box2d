@@ -56,7 +56,7 @@ include_directories(include)
 include_directories("dependencies/Box2D/Include")
 add_library(box2d STATIC IMPORTED)
 
-add_executable(segundo src/main.cpp)
+add_executable(segundo src/main.cpp src/toolbox.cpp src/button_sprite.cpp)
 
 target_include_directories("segundo" PUBLIC ${SFML_INCLUDE_DIRS})
 target_link_libraries("segundo" imgui imgui-sfml sfml-graphics sfml-audio GL)
