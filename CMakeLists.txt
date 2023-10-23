@@ -47,17 +47,27 @@ add_library(imgui-sfml STATIC
     ${IMGUI_PATH}/imgui-sfml/imgui-SFML.cpp
 )
 
+
 # Add include directories for the ImGui and SFML libraries
 target_include_directories(imgui PUBLIC ${IMGUI_PATH})
 target_include_directories(imgui-sfml PUBLIC ${IMGUI_PATH}/imgui-sfml)
 target_include_directories(imgui-sfml PUBLIC ${IMGUI_PATH})
  
 include_directories(include)
-include_directories("dependencies/Box2D/Include")
-add_library(box2d STATIC IMPORTED)
 
-add_executable(segundo src/main.cpp src/toolbox.cpp src/button_sprite.cpp)
+# Box2d
+set(BOX2D_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/Box2D/Source/Gen/float)
+message(STATUS "Box2D path: ${BOX2D_PATH}")
+include_directories("dependencies/Box2D/Include")
+link_directories(${BOX2D_PATH})
+# add_library(box2d STATIC IMPORTED)
+
+add_executable(segundo src/main.cpp src/toolbox.cpp src/button_sprite.cpp src/SegundoDoc.cpp)
+
+
+target_link_libraries(segundo box2d)
 
 target_include_directories("segundo" PUBLIC ${SFML_INCLUDE_DIRS})
-target_link_libraries("segundo" imgui imgui-sfml sfml-graphics sfml-audio GL)
+target_link_libraries("segundo" imgui imgui-sfml sfml-graphics sfml-audio GL box2d)
 
+file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})

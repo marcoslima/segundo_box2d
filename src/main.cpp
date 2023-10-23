@@ -11,6 +11,7 @@
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/Event.hpp>
 #include <toolbox.h>
+#include "SegundoDoc.h"
 
 
 int main() {
@@ -19,6 +20,7 @@ int main() {
     ImGui::SFML::Init(window);
 
     ToolBox toolbox;
+    CSegundoDoc doc;
 
     sf::Clock deltaClock;
     while (window.isOpen()) {
