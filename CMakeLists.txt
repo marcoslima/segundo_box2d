@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 project("segundo" VERSION 1.0)
 
 # Define C++ standard to use
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
 
 # Find SFML library
 find_package(SFML 2.5 COMPONENTS graphics audio REQUIRED)
@@ -58,11 +58,10 @@ include_directories(include)
 # Box2d
 set(BOX2D_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/Box2D/Source/Gen/float)
 message(STATUS "Box2D path: ${BOX2D_PATH}")
-include_directories("dependencies/Box2D/Include")
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/Box2D/Include)
 link_directories(${BOX2D_PATH})
-# add_library(box2d STATIC IMPORTED)
 
-add_executable(segundo src/main.cpp src/toolbox.cpp src/button_sprite.cpp src/SegundoDoc.cpp)
+add_executable(segundo src/main.cpp src/toolbox.cpp src/button_sprite.cpp src/params.cpp src/SegundoDoc.cpp src/SegundoVw.cpp)
 
 
 target_link_libraries(segundo box2d)

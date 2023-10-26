@@ -13,14 +13,17 @@ public:
 		toolAddPoly,
 		toolAddHexagon,
 		toolJoint,
+		toolVarBox,
 		toolQtd
 	} TTool;
 
 private:
     std::map<TTool, ButtonSprite> buttons;
-    TTool currentTool = toolPointer;
+    TTool m_currentTool = toolPointer;
 
 public:
     ToolBox();
     void draw();
+	void setCurrentTool(TTool tool);
+	TTool getCurrentTool();
 };

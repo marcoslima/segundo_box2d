@@ -10,17 +10,23 @@
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/System/Clock.hpp>
 #include <SFML/Window/Event.hpp>
-#include <toolbox.h>
+#include "toolbox.h"
 #include "SegundoDoc.h"
+#include "SegundoVw.h"
 
 
 int main() {
     sf::RenderWindow window(sf::VideoMode(1920, 1080), "Box2D - segundo");
     window.setFramerateLimit(60);
-    ImGui::SFML::Init(window);
+    if(!ImGui::SFML::Init(window, true))
+    {
+        std::cout << "Error initializing ImGui-SFML!" << std::endl;
+        return 1;
+    }
+    ImGuiIO& io = ImGui::GetIO();
 
-    ToolBox toolbox;
     CSegundoDoc doc;
+    CSegundoVw view(&doc, window);
 
     sf::Clock deltaClock;
     while (window.isOpen()) {
@@ -37,9 +43,30 @@ int main() {
 
         ImGui::ShowDemoWindow();
 
-        toolbox.draw();
-
         window.clear();
+        if(ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        {
+            view.OnLButtonDown(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
+        }
+        if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        {
+            view.OnLButtonUp(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
+        }
+        if(ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        {
+            view.OnMouseMove(io.KeyShift, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
+        }
+        if(ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+        {
+            view.OnMouseMove(io.KeyShift, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
+        }
+        // TODO: Completar aqui
+        // if(ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+        // {
+        //     view.OnRButtonUp(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
+        // }
+        
+        view.OnDraw(window);
         ImGui::SFML::Render(window);
         window.display();
     }

@@ -10,15 +10,28 @@ ToolBox::ToolBox()
     buttons[toolAddPoly] = ButtonSprite("assets/icons/9025719_line_segments_icon.png");
     buttons[toolAddHexagon] = ButtonSprite("assets/icons/9025624_hexagon_icon.png");
     buttons[toolJoint] = ButtonSprite("assets/icons/5288409_location_map_navigation_pin_point_icon.png");
+    buttons[toolVarBox] = ButtonSprite("assets/icons/rect1.png");
 }
 
-void ToolBox::draw() {
+void ToolBox::draw() 
+{
     ImGui::Begin("Tools");
-    for (auto& button : buttons) {
-        if(button.second.draw(currentTool == button.first))
+    for (auto& button : buttons) 
+    {
+        if(button.second.draw(m_currentTool == button.first))
         {
-            currentTool = button.first;
+            m_currentTool = button.first;
         }
     }
     ImGui::End();
+}
+
+void ToolBox::setCurrentTool(TTool tool) 
+{
+    m_currentTool = tool;
+}
+
+ToolBox::TTool ToolBox::getCurrentTool()
+{
+    return m_currentTool;
 }
