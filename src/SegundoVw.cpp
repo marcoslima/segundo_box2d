@@ -78,7 +78,7 @@ CSegundoVw::~CSegundoVw()
 // CSegundoVw drawing
 void CSegundoVw::OnDraw(sf::RenderWindow& window)
 {
-	m_pDoc->m_pWorld->Step(1.0f/60.0f, 10);
+	m_pDoc->m_pWorld->Step(1.0f/60.0f, 10, 10);
 
     m_paramsBox.draw();
     m_toolbox.draw();
@@ -132,14 +132,14 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 
 	for (b2Body* b = pWorld->GetBodyList(); b; b = b->GetNext())
 	{
-		if(b->IsFrozen())
+		if(!b->IsAwake())
 		{
 			vecDel.push_back(b);
 		}
-		for (b2Shape* s = b->GetShapeList(); s; s = s->GetNext())
+		for (b2Fixture* s = b->GetFixtureList(); s; s = s->GetNext())
 		{
 			// FILL:
-			if(b->IsFrozen())
+			if(!b->IsAwake())
 			{
 				crFill = sf::Color::Red;
 			}
@@ -147,11 +147,11 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 			{
 				crFill = sf::Color(255,255,128);
 			}
-			else if(b->IsSleeping())
+			else if(!b->IsAwake())
 			{
 				crFill = sf::Color(s->GetRestitution() * 255, 0, 0);
 			}
-			else if(b->IsStatic())
+			else if(b->GetType() == b2_staticBody)
 			{
 				crFill = sf::Color(192,192,192);
 			}
@@ -377,7 +377,7 @@ void CSegundoVw::OnSimulacao(void)
 #endif
 
 
-void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Shape* shape, sf::Color crFill, sf::Color crCont)
+void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* shape, sf::Color crFill, sf::Color crCont)
 {
 	// CBrush *pOldBrush, brushFill;
 	// CPen   *pOldPen, penCont;
@@ -390,7 +390,7 @@ void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Shape* shape, sf::C
 	// pOldPen   = pDc->SelectObject(&penCont);
 	switch (shape->GetType())
 	{
-	case e_circleShape:
+	case b2Shape::Type::e_circle:
 		if(false)
 		{
 			// const b2CircleShape* circle = (const b2CircleShape*)shape;
@@ -404,8 +404,8 @@ void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Shape* shape, sf::C
 		if(true)
 		{
 			const b2CircleShape* circle = (const b2CircleShape*)shape;
-			b2Vec2 x = circle->GetLocalPosition();
-			float32 r = circle->GetRadius();
+			b2Vec2 x = circle->m_p;
+			float r = circle->m_radius;
 			CRect rcBall(x.x-r,x.y-r,x.x+r,x.y+r);
             sf::CircleShape circle_shape(r);
             circle_shape.setPosition(x.x, x.y);
@@ -420,14 +420,14 @@ void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Shape* shape, sf::C
 		}
 		break;
 
-	case e_polygonShape:
+	case b2Shape::Type::e_polygon:
 		{
-			const b2PolygonShape* poly = (const b2PolygonShape*)shape;
-            size_t vertexCount = poly->GetVertexCount();
+			const b2PolygonShape* poly = (const b2PolygonShape*)shape->GetShape();
+            size_t vertexCount = poly->m_count;
             sf::ConvexShape convex(vertexCount);
             for (size_t i = 0; i < vertexCount; ++i)
             {
-                b2Vec2 v = poly->GetVertices()[i];
+                b2Vec2 v = poly->m_vertices[i];
                 convex.setPoint(i, sf::Vector2f(v.x, v.y));
             }
 			window.draw(convex);
@@ -501,11 +501,8 @@ void CSegundoVw::AddBox(sf::Vector2i ptWhere)
 	// CMainFrame *pFrm = (CMainFrame *)AfxGetMainWnd();
 	// pFrm->m_barObjPrm.UpdateData();
 	
-	b2PolygonDef boxDef;
+	b2PolygonShape boxDef;
 	boxDef.SetAsBox(5.0f, 5.0f);
-	boxDef.density = 1.0f;
-    boxDef.friction = 0.3f;
-    boxDef.restitution = 0.5f;
 
 	b2BodyDef bodyDef;
     bodyDef.position = DeviceToWorld(ptWhere);
@@ -513,17 +510,22 @@ void CSegundoVw::AddBox(sf::Vector2i ptWhere)
 	cout << "Creating box at " << bodyDef.position.x << ", " << bodyDef.position.y << endl;
 
 	b2Body* body = m_pDoc->m_pWorld->CreateBody(&bodyDef);
-    body->CreateShape(&boxDef);
+	b2FixtureDef fixdef;
+	fixdef.shape = &boxDef;
+	fixdef.density = 1.0f;
+    fixdef.friction = 0.3f;
+    fixdef.restitution = 0.5f;
+    body->CreateFixture(&fixdef);
 	body->SetAngularVelocity(0);
 	body->SetLinearVelocity( b2Vec2(0, 0));
-	body->SetMassFromShapes();
 }
 
 void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)
 {
 	if(!m_bRunning && m_toolbox.getCurrentTool() == ToolBox::TTool::toolPointer && m_pGrabbed != NULL)
 	{
-		m_pGrabbed->SetXForm(DeviceToWorld(point), m_pGrabbed->GetAngle());
+		// TODO: Completar aqui
+		// m_pGrabbed->SetXForm(DeviceToWorld(point), m_pGrabbed->GetAngle());
 	}
 
     // TODO: Completar aqui
@@ -549,7 +551,7 @@ void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)
 
 b2Vec2 CSegundoVw::LogicalToWorld(sf::Vector2f devicePoint)
 {
-	return b2Vec2((float32)devicePoint.x,(float32)devicePoint.y);
+	return b2Vec2((float)devicePoint.x,(float)devicePoint.y);
 }
 
 sf::Vector2f CSegundoVw::DeviceToLogical(sf::Vector2i devicePoint)

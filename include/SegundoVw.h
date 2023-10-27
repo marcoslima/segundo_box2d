@@ -1,7 +1,7 @@
 #pragma once
 // SegundoVw.h : interface of the CSegundoVw class
 //
-#include <Box2D.h>
+#include <box2d/box2d.h>
 #include <SFML/Graphics.hpp>
 #include "toolbox.h"
 #include "params.h"
@@ -37,7 +37,7 @@ public:
 
 protected:
 	void DrawShape(sf::RenderWindow& window, 
-                   const b2Shape* shape, 
+                   const b2Fixture* shape, 
                    sf::Color crFill = sf::Color(255U, 255U, 255U), 
                    sf::Color crCont = sf::Color(0U,0U,0U));
 	void SetDc(sf::RenderWindow& window);
@@ -54,7 +54,7 @@ protected:
 // Vento!
 public:
     b2BodyDef m_bodyDefAr;
-	b2CircleDef m_circle_def;
+	b2CircleShape m_circle_def;
 
 	float m_maxVel;
 	float m_maxRot;
