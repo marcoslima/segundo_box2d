@@ -78,13 +78,13 @@ CSegundoVw::~CSegundoVw()
 // CSegundoVw drawing
 void CSegundoVw::OnDraw(sf::RenderWindow& window)
 {
-	m_pDoc->m_pWorld->Step(1.0f/60.0f, 10, 10);
+	b2World *pWorld = m_pDoc->m_pWorld;
+	pWorld->Step(1.0f/60.0f, 10, 10);
 
     m_paramsBox.draw();
     m_toolbox.draw();
 	Draw(window);
 	
-	b2World *pWorld = m_pDoc->m_pWorld;
 	int32 nQtdBodies = pWorld->GetBodyCount();
 	// string strStat = format("Número de corpos: {}", nQtdBodies);
 	// pFrm->SetSbText(strStat);
@@ -134,7 +134,7 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 	{
 		if(!b->IsAwake())
 		{
-			vecDel.push_back(b);
+			// vecDel.push_back(b);
 		}
 		for (b2Fixture* s = b->GetFixtureList(); s; s = s->GetNext())
 		{
@@ -512,12 +512,12 @@ void CSegundoVw::AddBox(sf::Vector2i ptWhere)
 	b2Body* body = m_pDoc->m_pWorld->CreateBody(&bodyDef);
 	b2FixtureDef fixdef;
 	fixdef.shape = &boxDef;
-	fixdef.density = 1.0f;
-    fixdef.friction = 0.3f;
-    fixdef.restitution = 0.5f;
+	fixdef.density = m_paramsBox.m_density;
+    fixdef.friction = m_paramsBox.m_friction;
+    fixdef.restitution = m_paramsBox.m_restitution;
     body->CreateFixture(&fixdef);
-	body->SetAngularVelocity(0);
-	body->SetLinearVelocity( b2Vec2(0, 0));
+	body->SetAngularVelocity(m_paramsBox.m_angular_velocity);
+	body->SetLinearVelocity( b2Vec2(m_paramsBox.m_linear_velocity[0],m_paramsBox.m_linear_velocity[1]) );
 }
 
 void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)

@@ -26,7 +26,7 @@ public:
 
     
 	sf::Vector2i m_ptPoly[MAX_POLY_VERTEXES];
-	int	   m_nCurPoly;
+	int	 m_nCurPoly;
 
 	bool m_bRunning;
     sf::RenderWindow& m_Window;
@@ -40,7 +40,6 @@ protected:
                    const b2Fixture* shape, 
                    sf::Color crFill = sf::Color(255U, 255U, 255U), 
                    sf::Color crCont = sf::Color(0U,0U,0U));
-	void SetDc(sf::RenderWindow& window);
 	void Draw(sf::RenderWindow& window);
 	void OnPointer(sf::Vector2i ptWhere);
 	void AddBox(sf::Vector2i ptWhere);
