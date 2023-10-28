@@ -77,7 +77,7 @@ void CSegundoVw::OnDraw(sf::RenderWindow& window)
 
 	{
 		ImGuiWindowFlags window_flags = 0
-		                                | ImGuiWindowFlags_NoBackground 
+		                                // | ImGuiWindowFlags_NoBackground 
 										// | ImGuiWindowFlags_NoTitleBar 
 										| ImGuiWindowFlags_NoResize 
 										| ImGuiWindowFlags_NoMove
@@ -145,7 +145,7 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 		for (b2Fixture* s = b->GetFixtureList(); s; s = s->GetNext())
 		{
 			// FILL:
-			if(!b->IsAwake())
+			if(!b->IsAwake() && b->GetType() != b2_staticBody)
 			{
 				crFill = sf::Color::Red;
 			}
