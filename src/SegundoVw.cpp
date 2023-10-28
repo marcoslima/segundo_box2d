@@ -46,7 +46,7 @@ using namespace std;
 // CSegundoVw construction/destruction
 
 CSegundoVw::CSegundoVw(CSegundoDoc *pDoc, sf::RenderWindow& window) :
-	  m_bRunning(false)
+	  m_bRunning(true)
 	, m_toolbox()
 	, m_pGrabbed(nullptr)
 	, m_pTempJoint(nullptr)
@@ -55,20 +55,10 @@ CSegundoVw::CSegundoVw(CSegundoDoc *pDoc, sf::RenderWindow& window) :
     , m_pDoc(pDoc)
     , m_Window(window)
 {
-	m_Window.setView(sf::View(sf::FloatRect(-100, -100, 200, 200)));
-	// Abaixo é código antigo, que ia implementar ar (aerodinamica)
-	// m_circle_def.radius = 2.0f;
-	// m_circle_def.density = 10.0f;
-	// m_circle_def.friction = 0.0f;
-	// m_circle_def.restitution = 1.0f;
-
-    // m_bodyDefAr.position.Set(-99.0f,(float32)((rand()%200)-100.0f));
-    // b2Body* m_bodyAr = m_pDoc->m_pWorld->CreateBody(&m_bodyDefAr);
-    // m_bodyAr->CreateShape(&m_circle_def);
-    // m_bodyAr->SetMassFromShapes();
-
-//	m_bodyDefAr.angularVelocity = 0.0f;
-//	m_bodyDefAr.linearVelocity.Set( 50.0f,0);
+	sf::Vector2f top_left = WorldToLogical(m_pDoc->m_world_top_left);
+	sf::Vector2f size = WorldToLogical(m_pDoc->m_world_size);
+	sf::FloatRect rc = sf::FloatRect(top_left, size);
+	m_Window.setView(sf::View(rc));
 }
 
 CSegundoVw::~CSegundoVw()
@@ -79,36 +69,23 @@ CSegundoVw::~CSegundoVw()
 void CSegundoVw::OnDraw(sf::RenderWindow& window)
 {
 	b2World *pWorld = m_pDoc->m_pWorld;
-	pWorld->Step(1.0f/60.0f, 10, 10);
+	pWorld->Step(1.0f/60.0f, 6, 2);
 
     m_paramsBox.draw();
     m_toolbox.draw();
 	Draw(window);
 	
 	int32 nQtdBodies = pWorld->GetBodyCount();
-	// string strStat = format("Número de corpos: {}", nQtdBodies);
-	// pFrm->SetSbText(strStat);
-}
 
-CRect GetClientRect(sf::RenderWindow& window)
-{
-    sf::Vector2i size = (sf::Vector2i)window.getSize();
-    sf::Vector2f wsize = window.mapPixelToCoords(size);
-    return CRect(0,0,wsize.x,wsize.y);
+	ImGui::Begin("Debug");
+	ImGui::Text("Número de corpos: %d", nQtdBodies);
+	ImGui::End();	
 }
 
 void CSegundoVw::Draw(sf::RenderWindow& window)
 {
 	// CCronometro cr;
 	// cr.Start();
-	CRect rc = GetClientRect(window);
-    float border = 5;
-    sf::RectangleShape rect(sf::Vector2f(rc.width-2*border, rc.height-2*border));
-    rect.setPosition(border, border);
-    rect.setFillColor(sf::Color::Black);
-    rect.setOutlineColor(sf::Color::Red);
-    rect.setOutlineThickness(1 );
-    window.draw(rect);
 
 	vector<b2Body*> vecDel;
 	b2World *pWorld = m_pDoc->m_pWorld;
@@ -130,8 +107,19 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 	// 	maxImpulse = max(fImpulses,maxImpulse);
     // }
 
+	bool bFirst = true;
 	for (b2Body* b = pWorld->GetBodyList(); b; b = b->GetNext())
 	{
+		const b2Transform& xf = b->GetTransform();
+		b2Vec2 position = b->GetPosition();
+		if(bFirst)
+		{
+			bFirst = false;
+			ImGui::Begin("Debug");
+			ImGui::Text("Posição do corpo: %f, %f", position.x, position.y);
+			ImGui::End();
+		}
+
 		if(!b->IsAwake())
 		{
 			// vecDel.push_back(b);
@@ -171,15 +159,8 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 			{
 				crStroke = sf::Color::White;
 			}
-			
-			if(b->GetMass() > 0 && fImpulses/b->GetMass() > 1.0)
-			{
-				FragmentaObjeto(b);
-			}
-			else
-			{
-				DrawShape(window, s, crFill, crStroke);
-			}
+
+			DrawShape(window, s, xf, position, crFill, crStroke);
 		}
 	}
 	m_maxImpulse = maxImpulse;
@@ -255,94 +236,11 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
     #endif
 }
 
-void CSegundoVw::FragmentaObjeto(b2Body *b)
-{
-#if 0
-	b2World *world = GetDocument()->m_Wa.GetWorld();
-	float w = b->GetAngularVelocity();
-	b2Vec2  r = b->GetLinearVelocity();
-	float32 m = b->GetMass();
-	if(m == 0)
-	{
-		GetDocument()->m_Wa.ReleaseWorld();
-		return;
-	}
-	
-	// Cada shape ser� um novo objeto.
-	// Cada novo objeto ser� o shape de origem fragmentado
-	// O n�mero de fragmentos ser� um rand�mico entre 2 e 5
-	// Por enquanto os fragmentos ser�o tri�ngulos aleat�rios.
-	for (b2Shape* s = b->m_shapeList; s; s = s->m_next)
-	{
-		switch (s->m_type)
-		{
-		case e_circleShape:
-/*
-			const b2CircleShape* circle = (const b2CircleShape*)shape;
-			b2Vec2 x = circle->m_position;
-			float32 r = circle->m_radius;
-			CRect rcBall(x.x-r,x.y-r,x.x+r,x.y+r);
-
-			pDc->Ellipse(rcBall);
-
-			b2Vec2 ax = circle->m_R.col1;
-			pDc->MoveTo(x.x,x.y);
-			pDc->LineTo(x.x + r * ax.x, x.y + r * ax.y);
-*/
-			break;
-
-		case e_polyShape:
-			{
-				const b2PolyShape* poly = (const b2PolyShape*)s;
-				b2Vec2 vCenter(0,0);
-				int32 i;
-				for (i = 0; i < poly->m_vertexCount; i++)
-				{
-					vCenter += b2Mul(poly->m_R, poly->m_vertices[i]);
-				}
-				vCenter.x /= poly->m_vertexCount;
-				vCenter.y /= poly->m_vertexCount;
-
-				b2PolyDef polydef;
-				polydef.density		= 1.0f;
-				polydef.friction	= s->m_friction;
-				polydef.restitution = s->m_restitution;
-				polydef.vertexCount = 3;
-				vector<b2Body *> vecPartes;
-				b2BodyDef* pDef = new b2BodyDef;
-				for (i = 0; i < poly->m_vertexCount; i++)
-				{
-					polydef.vertices[0] = vCenter;
-					polydef.vertices[1] = poly->m_vertices[i];
-					if(i == 0)
-						polydef.vertices[2] = poly->m_vertices[poly->m_vertexCount-1];
-					else
-						polydef.vertices[2] = poly->m_vertices[i-1];
-
-					pDef->position = vCenter;
-					pDef->angularVelocity = 0;
-					pDef->linearVelocity.Set( 0, 0);
-					pDef->AddShape(&polydef);
-					vecPartes.push_back(world->CreateBody(pDef));
-					delete pDef;
-					pDef = new b2BodyDef;
-				}
-				delete pDef;
-			}
-			break;
-		}
-	}
-	world->DestroyBody(b);
-	GetDocument()->m_Wa.ReleaseWorld();
-#endif
-}
-
 // CSegundoVw message handlers
 void CSegundoVw::OnSimulaAtivada()
 {
 	m_bRunning = ! m_bRunning;
 }
-
 
 #if 0
 void CSegundoVw::OnUpdateSimulaAtivada(CCmdUI *pCmdUI)
@@ -376,18 +274,8 @@ void CSegundoVw::OnSimulacao(void)
 }
 #endif
 
-
-void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* shape, sf::Color crFill, sf::Color crCont)
+void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* shape, const b2Transform& xf, b2Vec2 position, sf::Color crFill, sf::Color crCont)
 {
-	// CBrush *pOldBrush, brushFill;
-	// CPen   *pOldPen, penCont;
-
-	// brushFill.CreateSolidBrush(crFill);
-	// penCont.CreatePen(PS_SOLID,0,crCont);
-
-
-	// pOldBrush = pDc->SelectObject(&brushFill);
-	// pOldPen   = pDc->SelectObject(&penCont);
 	switch (shape->GetType())
 	{
 	case b2Shape::Type::e_circle:
@@ -427,22 +315,14 @@ void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* shape, sf:
             sf::ConvexShape convex(vertexCount);
             for (size_t i = 0; i < vertexCount; ++i)
             {
-                b2Vec2 v = poly->m_vertices[i];
-                convex.setPoint(i, sf::Vector2f(v.x, v.y));
+                b2Vec2 v = b2Mul(xf, poly->m_vertices[i]);
+                convex.setPoint(i, WorldToLogical(v));
             }
+			convex.setFillColor(crFill);
+			convex.setOutlineColor(crCont);
+			convex.setOutlineThickness(0.2f);
+
 			window.draw(convex);
-			// // pDc->BeginPath();			
-			// for (int32 i = 0; i < poly->GetVertexCount(); ++i)
-			// {
-			// 	b2Vec2 v = poly->m_position + b2Mul(poly->m_R, poly->m_vertices[i]);
-			// 	if(i == 0)
-			// 		pDc->MoveTo(v.x,v.y);
-			// 	else
-			// 		pDc->LineTo(v.x,v.y);
-			// }
-			// pDc->CloseFigure();
-			// pDc->EndPath();
-			// pDc->StrokeAndFillPath();
 		}
 		break;
 	}
@@ -507,8 +387,6 @@ void CSegundoVw::AddBox(sf::Vector2i ptWhere)
 	b2BodyDef bodyDef;
     bodyDef.position = DeviceToWorld(ptWhere);
 
-	cout << "Creating box at " << bodyDef.position.x << ", " << bodyDef.position.y << endl;
-
 	b2Body* body = m_pDoc->m_pWorld->CreateBody(&bodyDef);
 	b2FixtureDef fixdef;
 	fixdef.shape = &boxDef;
@@ -518,6 +396,7 @@ void CSegundoVw::AddBox(sf::Vector2i ptWhere)
     body->CreateFixture(&fixdef);
 	body->SetAngularVelocity(m_paramsBox.m_angular_velocity);
 	body->SetLinearVelocity( b2Vec2(m_paramsBox.m_linear_velocity[0],m_paramsBox.m_linear_velocity[1]) );
+	body->SetType(b2_dynamicBody);
 }
 
 void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)
@@ -562,6 +441,21 @@ sf::Vector2f CSegundoVw::DeviceToLogical(sf::Vector2i devicePoint)
 b2Vec2 CSegundoVw::DeviceToWorld(sf::Vector2i devicePoint)
 {
     return LogicalToWorld(DeviceToLogical(devicePoint));
+}
+
+sf::Vector2f CSegundoVw::WorldToLogical(b2Vec2 worldPoint)
+{
+	return sf::Vector2f(worldPoint.x, worldPoint.y);
+}
+
+sf::Vector2i CSegundoVw::LogicalToDevice(sf::Vector2f logicalPoint)
+{
+	return m_Window.mapCoordsToPixel(logicalPoint);
+}
+
+sf::Vector2i CSegundoVw::WorldToDevice(b2Vec2 worldPoint)
+{
+	return LogicalToDevice(WorldToLogical(worldPoint));
 }
 
 #if 0

@@ -38,6 +38,8 @@ public:
 protected:
 	void DrawShape(sf::RenderWindow& window, 
                    const b2Fixture* shape, 
+				   const b2Transform& xf,
+				   b2Vec2 position,
                    sf::Color crFill = sf::Color(255U, 255U, 255U), 
                    sf::Color crCont = sf::Color(0U,0U,0U));
 	void Draw(sf::RenderWindow& window);
@@ -48,7 +50,6 @@ protected:
 	// void AddVarBox(sf::Vector2i pt);
 	// void AddHexagon(sf::Vector2i pt);
 	void FinalizePoly(void);
-	void FragmentaObjeto(b2Body *b);
 
 // Vento!
 public:
@@ -98,9 +99,15 @@ public:
 	void OnInitialUpdate();
 	void OnPointerStep(void);
 	void OnPointerStep2(b2Vec2 posMouse);
-    sf::Vector2f DeviceToLogical(sf::Vector2i devicePoint);
+    
+	sf::Vector2f DeviceToLogical(sf::Vector2i devicePoint);
 	b2Vec2 LogicalToWorld(sf::Vector2f);
     b2Vec2 DeviceToWorld(sf::Vector2i devicePoint);
+
+    sf::Vector2f WorldToLogical(b2Vec2 worldPoint);
+	sf::Vector2i LogicalToDevice(sf::Vector2f logicalPoint);
+	sf::Vector2i WorldToDevice(b2Vec2 worldPoint);
+
 	void ProcessSounds(void);
 	void OnAddPoly(sf::Vector2i point);
 };

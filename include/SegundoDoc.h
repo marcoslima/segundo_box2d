@@ -6,11 +6,13 @@
 class CSegundoDoc
 {
 public:
-	CSegundoDoc();
+	CSegundoDoc(float aspectRatio = 1.0);
 	~CSegundoDoc();
 
 // Attributes
 public:
 	b2World *m_pWorld;
 	ImVec4	m_crBack;
+	b2Vec2 m_world_top_left;
+	b2Vec2 m_world_size;
 };
