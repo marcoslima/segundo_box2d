@@ -19,6 +19,11 @@ public:
     ParamsBox m_paramsBox;
     ToolBox m_toolbox;
 
+	bool m_bShowDemo;
+	bool m_bShowToolbox;
+	bool m_bShowParamsBox;
+
+
 	CSegundoDoc* m_pDoc;
 	
 	b2Body *m_pGrabbed;
@@ -45,7 +50,7 @@ protected:
 	void Draw(sf::RenderWindow& window);
 	void OnPointer(sf::Vector2i ptWhere);
 	void AddBox(sf::Vector2i ptWhere);
-	// void AddCircle(sf::Vector2i ptWhere);
+	void AddCircle(sf::Vector2i ptWhere);
 	// void AddJoint(sf::Vector2i pt1, sf::Vector2i pt2);
 	// void AddVarBox(sf::Vector2i pt);
 	// void AddHexagon(sf::Vector2i pt);
@@ -83,7 +88,7 @@ public:
 	afx_msg bool OnEraseBkgnd(sf::RenderWindow& window);
 	afx_msg void OnObjetosBox();
 	afx_msg void OnObjetosCirculo();
-	afx_msg void OnLButtonDown(uint64_t nFlags, sf::Vector2i point);
+	afx_msg void OnLButtonClicked(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnObjetosPointer();
 	afx_msg void OnObjetosJun();
 	afx_msg void OnMouseMove(bool bShift, sf::Vector2i point);

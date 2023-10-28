@@ -16,6 +16,7 @@ public:
 		toolVarBox,
 		toolQtd
 	} TTool;
+	static const char* window_id;
 
 private:
     std::map<TTool, ButtonSprite> buttons;
