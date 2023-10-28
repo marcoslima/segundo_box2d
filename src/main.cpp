@@ -33,7 +33,9 @@ int main()
     CSegundoVw view(&doc, window);
 
     sf::Clock deltaClock;
-    while (window.isOpen()) {
+    while (window.isOpen()) 
+    {
+
         sf::Event event;
         while (window.pollEvent(event)) {
             ImGui::SFML::ProcessEvent(window, event);
@@ -44,8 +46,6 @@ int main()
         }
 
         ImGui::SFML::Update(window, deltaClock.restart());
-
-        ImGui::ShowDemoWindow();
 
         window.clear();
         if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
@@ -69,10 +69,11 @@ int main()
         // {
         //     view.OnRButtonUp(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
         // }
-        
+
         view.OnDraw(window);
         ImGui::SFML::Render(window);
         window.display();
+
     }
 
     ImGui::SFML::Shutdown();

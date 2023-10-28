@@ -15,7 +15,17 @@ ToolBox::ToolBox()
 
 void ToolBox::draw() 
 {
-    ImGui::Begin("Tools");
+    ImGuiWindowFlags window_flags =   ImGuiWindowFlags_NoResize
+                                    | ImGuiWindowFlags_NoMove
+                                    | ImGuiWindowFlags_NoCollapse
+                                    | ImGuiWindowFlags_NoTitleBar
+                                    | ImGuiWindowFlags_NoScrollbar
+                                    | ImGuiWindowFlags_NoScrollWithMouse
+                                    | ImGuiWindowFlags_AlwaysAutoResize
+                                    ;
+    ImVec2 window_size = ImVec2(64*ToolBox::TTool::toolQtd, 64);
+    ImGui::SetWindowPos(ImVec2(0, 0));
+    ImGui::BeginChild("Tools", window_size, false, window_flags);
     for (auto& button : buttons) 
     {
         if(button.second.draw(m_currentTool == button.first))
@@ -23,7 +33,7 @@ void ToolBox::draw()
             m_currentTool = button.first;
         }
     }
-    ImGui::End();
+    ImGui::EndChild();
 }
 
 void ToolBox::setCurrentTool(TTool tool) 

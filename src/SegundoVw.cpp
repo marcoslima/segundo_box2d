@@ -71,15 +71,27 @@ void CSegundoVw::OnDraw(sf::RenderWindow& window)
 	b2World *pWorld = m_pDoc->m_pWorld;
 	pWorld->Step(1.0f/60.0f, 6, 2);
 
-    m_paramsBox.draw();
-    m_toolbox.draw();
-	Draw(window);
-	
-	int32 nQtdBodies = pWorld->GetBodyCount();
+	{
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		ImGui::Begin("Segundo", NULL, window_flags);
 
-	ImGui::Begin("Debug");
-	ImGui::Text("Número de corpos: %d", nQtdBodies);
-	ImGui::End();	
+        ImGui::ShowDemoWindow();
+
+		// GUI
+		m_toolbox.draw();
+		m_paramsBox.draw();
+
+		// Render
+		Draw(window);
+		
+		int32 nQtdBodies = pWorld->GetBodyCount();
+
+		ImGui::Begin("Status");
+		ImGui::Text("Número de corpos: %d", nQtdBodies);
+		ImGui::End();	
+
+		ImGui::End();
+	}
 }
 
 void CSegundoVw::Draw(sf::RenderWindow& window)
@@ -107,18 +119,10 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 	// 	maxImpulse = max(fImpulses,maxImpulse);
     // }
 
-	bool bFirst = true;
 	for (b2Body* b = pWorld->GetBodyList(); b; b = b->GetNext())
 	{
 		const b2Transform& xf = b->GetTransform();
 		b2Vec2 position = b->GetPosition();
-		if(bFirst)
-		{
-			bFirst = false;
-			ImGui::Begin("Debug");
-			ImGui::Text("Posição do corpo: %f, %f", position.x, position.y);
-			ImGui::End();
-		}
 
 		if(!b->IsAwake())
 		{
