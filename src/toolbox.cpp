@@ -1,6 +1,7 @@
 #include <toolbox.h>
 #include <imgui.h>
 
+const char* ToolBox::window_id = "Tools";
 
 ToolBox::ToolBox() 
 {
@@ -25,7 +26,7 @@ void ToolBox::draw()
                                     ;
     ImVec2 window_size = ImVec2(64*ToolBox::TTool::toolQtd, 64);
     ImGui::SetWindowPos(ImVec2(0, 0));
-    ImGui::BeginChild("Tools", window_size, false, window_flags);
+    ImGui::BeginChild(ToolBox::window_id, window_size, false, window_flags);
     for (auto& button : buttons) 
     {
         if(button.second.draw(m_currentTool == button.first))

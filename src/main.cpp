@@ -50,7 +50,7 @@ int main()
         window.clear();
         if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
-            view.OnLButtonDown(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
+            view.OnLButtonClicked(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
         }
         if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
         {

@@ -54,6 +54,9 @@ CSegundoVw::CSegundoVw(CSegundoDoc *pDoc, sf::RenderWindow& window) :
 	, m_dwStep(0)
     , m_pDoc(pDoc)
     , m_Window(window)
+	, m_bShowDemo(false)
+	, m_bShowToolbox(true)
+	, m_bShowParamsBox(false)
 {
 	sf::Vector2f top_left = WorldToLogical(m_pDoc->m_world_top_left);
 	sf::Vector2f size = WorldToLogical(m_pDoc->m_world_size);
@@ -69,17 +72,28 @@ CSegundoVw::~CSegundoVw()
 void CSegundoVw::OnDraw(sf::RenderWindow& window)
 {
 	b2World *pWorld = m_pDoc->m_pWorld;
+	pWorld->SetGravity(b2Vec2(m_paramsBox.m_gravity[0], m_paramsBox.m_gravity[1]));
 	pWorld->Step(1.0f/60.0f, 6, 2);
 
 	{
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		ImGuiWindowFlags window_flags = 0
+		                                | ImGuiWindowFlags_NoBackground 
+										// | ImGuiWindowFlags_NoTitleBar 
+										| ImGuiWindowFlags_NoResize 
+										| ImGuiWindowFlags_NoMove
+										| ImGuiWindowFlags_AlwaysAutoResize
+										;
 		ImGui::Begin("Segundo", NULL, window_flags);
 
-        ImGui::ShowDemoWindow();
+		ImGui::Checkbox("Show toolbox", &m_bShowToolbox);
+		ImGui::SameLine();
+		ImGui::Checkbox("Show params box", &m_bShowParamsBox);
+		ImGui::SameLine();
+		ImGui::Checkbox("Show demo window", &m_bShowDemo);
 
-		// GUI
-		m_toolbox.draw();
-		m_paramsBox.draw();
+		if(m_bShowToolbox) m_toolbox.draw();
+		if(m_bShowParamsBox) m_paramsBox.draw();
+		if(m_bShowDemo) ImGui::ShowDemoWindow();
 
 		// Render
 		Draw(window);
@@ -278,9 +292,11 @@ void CSegundoVw::OnSimulacao(void)
 }
 #endif
 
-void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* shape, const b2Transform& xf, b2Vec2 position, sf::Color crFill, sf::Color crCont)
+void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* fixture, const b2Transform& xf, b2Vec2 position, sf::Color crFill, sf::Color crCont)
 {
-	switch (shape->GetType())
+	const b2Shape* shape = fixture->GetShape();
+	b2Shape::Type shapeType = shape->GetType();
+	switch (shapeType)
 	{
 	case b2Shape::Type::e_circle:
 		if(false)
@@ -296,15 +312,17 @@ void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* shape, con
 		if(true)
 		{
 			const b2CircleShape* circle = (const b2CircleShape*)shape;
-			b2Vec2 x = circle->m_p;
-			float r = circle->m_radius;
-			CRect rcBall(x.x-r,x.y-r,x.x+r,x.y+r);
+			b2Vec2 center = b2Mul(xf, circle->m_p);
+			float r = WorldToLogical(b2Vec2(circle->m_radius, 0)).x;
             sf::CircleShape circle_shape(r);
-            circle_shape.setPosition(x.x, x.y);
+            circle_shape.setPosition(WorldToLogical(center) - WorldToLogical(b2Vec2(r, r)));
             circle_shape.setFillColor(crFill);
             circle_shape.setOutlineColor(crCont);
-            circle_shape.setOutlineThickness(1);
+            circle_shape.setOutlineThickness(0.2f);
+
             window.draw(circle_shape);
+			cout << "Position: " << center.x << ", " << center.y << endl;
+			cout << "Radius: " << r << endl;
 
 			// b2Vec2 ax = circle->m_R.col1;
 			// pDc->MoveTo(x.x,x.y);
@@ -314,7 +332,7 @@ void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* shape, con
 
 	case b2Shape::Type::e_polygon:
 		{
-			const b2PolygonShape* poly = (const b2PolygonShape*)shape->GetShape();
+			const b2PolygonShape* poly = (const b2PolygonShape*)shape;
             size_t vertexCount = poly->m_count;
             sf::ConvexShape convex(vertexCount);
             for (size_t i = 0; i < vertexCount; ++i)
@@ -353,8 +371,13 @@ void CSegundoVw::OnLButtonUp(uint64_t nFlags, sf::Vector2i point)
 	// }
 }
 
-void CSegundoVw::OnLButtonDown(uint64_t nFlags, sf::Vector2i point)
+void CSegundoVw::OnLButtonClicked(uint64_t nFlags, sf::Vector2i point)
 {
+	if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow))
+	{
+		return;
+	}
+
 	switch(m_toolbox.getCurrentTool())
 	{
     // TODO: Completar aqui
@@ -364,9 +387,9 @@ void CSegundoVw::OnLButtonDown(uint64_t nFlags, sf::Vector2i point)
 	case ToolBox::TTool::toolAddBox:
 		AddBox(point);
 		break;
-	// case ToolBox::TTool::toolAddCircle:
-	// 	AddCircle(point);
-	// 	break;
+	case ToolBox::TTool::toolAddCircle:
+		AddCircle(point);
+		break;
 	// case ToolBox::TTool::toolJoint:
 	// 	AddJoint(point,point);
 	// 	break;
@@ -377,30 +400,6 @@ void CSegundoVw::OnLButtonDown(uint64_t nFlags, sf::Vector2i point)
 	// 	AddHexagon(point);
 	// 	break;
 	}
-}
-
-void CSegundoVw::AddBox(sf::Vector2i ptWhere)
-{
-    // TODO: Adicionar janela de parâmetros para pegá-los aqui.
-	// CMainFrame *pFrm = (CMainFrame *)AfxGetMainWnd();
-	// pFrm->m_barObjPrm.UpdateData();
-	
-	b2PolygonShape boxDef;
-	boxDef.SetAsBox(5.0f, 5.0f);
-
-	b2BodyDef bodyDef;
-    bodyDef.position = DeviceToWorld(ptWhere);
-
-	b2Body* body = m_pDoc->m_pWorld->CreateBody(&bodyDef);
-	b2FixtureDef fixdef;
-	fixdef.shape = &boxDef;
-	fixdef.density = m_paramsBox.m_density;
-    fixdef.friction = m_paramsBox.m_friction;
-    fixdef.restitution = m_paramsBox.m_restitution;
-    body->CreateFixture(&fixdef);
-	body->SetAngularVelocity(m_paramsBox.m_angular_velocity);
-	body->SetLinearVelocity( b2Vec2(m_paramsBox.m_linear_velocity[0],m_paramsBox.m_linear_velocity[1]) );
-	body->SetType(b2_dynamicBody);
 }
 
 void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)
@@ -462,31 +461,51 @@ sf::Vector2i CSegundoVw::WorldToDevice(b2Vec2 worldPoint)
 	return LogicalToDevice(WorldToLogical(worldPoint));
 }
 
-#if 0
-void CSegundoVw::AddCircle(CPoint ptWhere)
+void CSegundoVw::AddBox(sf::Vector2i ptWhere)
 {
-	CMainFrame *pFrm = (CMainFrame *)AfxGetMainWnd();
-	pFrm->m_barObjPrm.UpdateData();
+	b2PolygonShape boxDef;
+	boxDef.SetAsBox(m_paramsBox.m_size[0], m_paramsBox.m_size[1]);
+	boxDef.m_centroid.Set(0.0f, 0.0f);
 
-	b2CircleDef sdc;
-	sdc.radius = pFrm->m_barObjPrm.m_fDim[0];
-	sdc.density = pFrm->m_barObjPrm.m_fDensidade;
-	sdc.friction = pFrm->m_barObjPrm.m_fAtrito;
-	sdc.restitution = pFrm->m_barObjPrm.m_fElasticidade;
+	b2BodyDef bodyDef;
+    bodyDef.position = DeviceToWorld(ptWhere);
+	bodyDef.angularVelocity = m_paramsBox.m_angular_velocity;
+	bodyDef.linearVelocity.Set( m_paramsBox.m_linear_velocity[0],
+								m_paramsBox.m_linear_velocity[1]);
+	bodyDef.type = b2_dynamicBody;
 
-    b2BodyDef bodyDef;
-    bodyDef.position = MakeLP(ptWhere);
-	bodyDef.angularVelocity = pFrm->m_barObjPrm.m_fAngular;
-	bodyDef.linearVelocity.Set( pFrm->m_barObjPrm.m_fLinear[0],
-								pFrm->m_barObjPrm.m_fLinear[1]);
-	bodyDef.AddShape(&sdc);
-	b2Body* body = GetDocument()->m_Wa.GetWorld()->CreateBody(&bodyDef);
-	GetDocument()->m_Wa.ReleaseWorld();
-
-	if(!m_bRunning)
-		Invalidate();
+	b2Body* body = m_pDoc->m_pWorld->CreateBody(&bodyDef);
+	b2FixtureDef fixdef;
+	fixdef.shape = &boxDef;
+	fixdef.density = m_paramsBox.m_density;
+    fixdef.friction = m_paramsBox.m_friction;
+    fixdef.restitution = m_paramsBox.m_restitution;
+    body->CreateFixture(&fixdef);
 }
 
+void CSegundoVw::AddCircle(sf::Vector2i ptWhere)
+{
+	b2CircleShape circleShape;
+	circleShape.m_radius = m_paramsBox.m_size[0];
+	circleShape.m_p.Set(0.0f, 0.0f);
+
+	b2BodyDef bodyDef;
+	bodyDef.position = DeviceToWorld(ptWhere);
+	bodyDef.angularVelocity = m_paramsBox.m_angular_velocity;
+	bodyDef.linearVelocity.Set(m_paramsBox.m_linear_velocity[0],
+							   m_paramsBox.m_linear_velocity[1]);
+
+	b2FixtureDef fixdef;
+	fixdef.shape = &circleShape;
+	fixdef.density = m_paramsBox.m_density;
+	fixdef.friction = m_paramsBox.m_friction;
+	fixdef.restitution = m_paramsBox.m_restitution;
+
+	b2Body* body = m_pDoc->m_pWorld->CreateBody(&bodyDef);
+	body->CreateFixture(&fixdef);
+	body->SetType(b2_dynamicBody);}
+
+#if 0
 void CSegundoVw::AddJoint(CPoint apt1, CPoint apt2)
 {
 	CPrimeiroDoc *pDoc = GetDocument();
