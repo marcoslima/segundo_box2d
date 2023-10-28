@@ -52,19 +52,34 @@ add_library(imgui-sfml STATIC
 target_include_directories(imgui PUBLIC ${IMGUI_PATH})
 target_include_directories(imgui-sfml PUBLIC ${IMGUI_PATH}/imgui-sfml)
 target_include_directories(imgui-sfml PUBLIC ${IMGUI_PATH})
- 
-include_directories(include)
 
-# Box2d
-set(BOX2D_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/Box2D/Source/Gen/float)
-message(STATUS "Box2D path: ${BOX2D_PATH}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/Box2D/Include)
-link_directories(${BOX2D_PATH})
+#########################################################
+## BOX2D
+# Define the path where the Box2D library will be cloned
+set(BOX2D_PATH ${CMAKE_CURRENT_BINARY_DIR}/box2d)
+
+# Clone the Box2D library from its GitHub repository
+IF(NOT EXISTS "${BOX2D_PATH}")
+    execute_process(
+        COMMAND git clone https://github.com/erincatto/box2d.git ${BOX2D_PATH}
+    )
+ELSE()
+    execute_process(
+        COMMAND pushd ${BOX2D_PATH} && git pull && popd
+    )
+ENDIF()
+
+# Add include directories for the Box2D library
+target_include_directories(imgui PUBLIC ${BOX2D_PATH}/include)
+
+# Add library directory for the Box2D library
+link_directories(${BOX2D_PATH}/build/bin)
+###########################################################
+
+include_directories(include)
 
 add_executable(segundo src/main.cpp src/toolbox.cpp src/button_sprite.cpp src/params.cpp src/SegundoDoc.cpp src/SegundoVw.cpp)
 
-
-target_link_libraries(segundo box2d)
 
 target_include_directories("segundo" PUBLIC ${SFML_INCLUDE_DIRS})
 target_link_libraries("segundo" imgui imgui-sfml sfml-graphics sfml-audio GL box2d)

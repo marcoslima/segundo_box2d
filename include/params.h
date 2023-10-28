@@ -8,6 +8,7 @@ public:
     float m_density;
     float m_friction;
     float m_restitution;
+    bool m_bOpen;
 public:
     ParamsBox();
     void draw();

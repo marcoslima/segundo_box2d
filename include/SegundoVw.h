@@ -1,7 +1,7 @@
 #pragma once
 // SegundoVw.h : interface of the CSegundoVw class
 //
-#include <Box2D.h>
+#include <box2d/box2d.h>
 #include <SFML/Graphics.hpp>
 #include "toolbox.h"
 #include "params.h"
@@ -26,7 +26,7 @@ public:
 
     
 	sf::Vector2i m_ptPoly[MAX_POLY_VERTEXES];
-	int	   m_nCurPoly;
+	int	 m_nCurPoly;
 
 	bool m_bRunning;
     sf::RenderWindow& m_Window;
@@ -37,10 +37,11 @@ public:
 
 protected:
 	void DrawShape(sf::RenderWindow& window, 
-                   const b2Shape* shape, 
+                   const b2Fixture* shape, 
+				   const b2Transform& xf,
+				   b2Vec2 position,
                    sf::Color crFill = sf::Color(255U, 255U, 255U), 
                    sf::Color crCont = sf::Color(0U,0U,0U));
-	void SetDc(sf::RenderWindow& window);
 	void Draw(sf::RenderWindow& window);
 	void OnPointer(sf::Vector2i ptWhere);
 	void AddBox(sf::Vector2i ptWhere);
@@ -49,12 +50,11 @@ protected:
 	// void AddVarBox(sf::Vector2i pt);
 	// void AddHexagon(sf::Vector2i pt);
 	void FinalizePoly(void);
-	void FragmentaObjeto(b2Body *b);
 
 // Vento!
 public:
     b2BodyDef m_bodyDefAr;
-	b2CircleDef m_circle_def;
+	b2CircleShape m_circle_def;
 
 	float m_maxVel;
 	float m_maxRot;
@@ -99,9 +99,15 @@ public:
 	void OnInitialUpdate();
 	void OnPointerStep(void);
 	void OnPointerStep2(b2Vec2 posMouse);
-    sf::Vector2f DeviceToLogical(sf::Vector2i devicePoint);
+    
+	sf::Vector2f DeviceToLogical(sf::Vector2i devicePoint);
 	b2Vec2 LogicalToWorld(sf::Vector2f);
     b2Vec2 DeviceToWorld(sf::Vector2i devicePoint);
+
+    sf::Vector2f WorldToLogical(b2Vec2 worldPoint);
+	sf::Vector2i LogicalToDevice(sf::Vector2f logicalPoint);
+	sf::Vector2i WorldToDevice(b2Vec2 worldPoint);
+
 	void ProcessSounds(void);
 	void OnAddPoly(sf::Vector2i point);
 };

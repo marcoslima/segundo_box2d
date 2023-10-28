@@ -3,42 +3,57 @@
 
 using namespace std;
 
-
-CSegundoDoc::CSegundoDoc()
+b2PolygonShape makeHorizontalGroundBox(float width)
 {
-    // m_pWorld = new b2World(b2Vec2(0.0f, 0.0f));
-    m_crBack = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+	b2PolygonShape groundBoxDefH;
+	groundBoxDefH.SetAsBox(width, 1.0f);
+	return groundBoxDefH;
+}
 
-	b2AABB worldAABB;
-    worldAABB.lowerBound.Set(-100.0f, -100.0f);
-    worldAABB.upperBound.Set(100.0f, 100.0f);
+b2PolygonShape makeVerticalGroundBox(float height)
+{
+	b2PolygonShape groundBoxDefV;
+    groundBoxDefV.SetAsBox(1.0f, height);
+	return groundBoxDefV;
+}
+
+b2World* makeWorld()
+{
 	b2Vec2 gravity(0.0f, 100.0f);
-    bool doSleep = true;
+	return new b2World(gravity);
+}
 
-	m_pWorld = new b2World(worldAABB, gravity, doSleep);
-	cout << "World created at " << m_pWorld << endl;
+CSegundoDoc::CSegundoDoc(float aspectRatio)
+{
+	m_pWorld = makeWorld();
 
-	b2PolygonDef groundBoxDefH, groundBoxDefV;
+	float height = 200.0f;
+	float width = height * aspectRatio;
+
+	b2PolygonShape groundBoxDefH = makeHorizontalGroundBox(width);
+	b2PolygonShape groundBoxDefV = makeVerticalGroundBox(height);
+
 	b2BodyDef groundBodyDef[4];
+
+	float posV = height / 2.0f - 1.0f;
+	float posH = width / 2.0f - 1.0f;
+    groundBodyDef[0].position.Set(  1.0f,-posV);
+    groundBodyDef[1].position.Set(  1.0f, posV);
+    groundBodyDef[2].position.Set(-posH,  1.0f);
+    groundBodyDef[3].position.Set( posH,  1.0f);
+
+	m_world_top_left = b2Vec2(-posH, -posV);
+	m_world_size = b2Vec2(width, height);
+
+
 	b2Body* bodies[4];
-
-    groundBodyDef[0].position = b2Vec2( 50.0f,  -99.0f);
-    groundBodyDef[1].position.Set( 0.0f, 98.0f);
-    groundBodyDef[2].position.Set( 0.0f,  0.0f);
-    groundBodyDef[3].position.Set(98.0f,  0.0f);
-
 	for(int i = 0; i < 4; i++)
 		bodies[i] = m_pWorld->CreateBody(&groundBodyDef[i]);
 
-
-	groundBoxDefH.SetAsBox(100.0f, 1.0f);
-    groundBoxDefV.SetAsBox(1.0f, 100.0f);
-	groundBoxDefH.density = groundBoxDefV.density = 0.0f;
-
-	bodies[0]->CreateShape(&groundBoxDefH);
-	bodies[1]->CreateShape(&groundBoxDefH);
-	bodies[2]->CreateShape(&groundBoxDefV);
-	bodies[3]->CreateShape(&groundBoxDefV);
+	bodies[0]->CreateFixture(&groundBoxDefH, 0.0f);
+	bodies[1]->CreateFixture(&groundBoxDefH, 0.0f);
+	bodies[2]->CreateFixture(&groundBoxDefV, 0.0f);
+	bodies[3]->CreateFixture(&groundBoxDefV, 0.0f);
 }
 
 CSegundoDoc::~CSegundoDoc()

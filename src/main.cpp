@@ -15,8 +15,12 @@
 #include "SegundoVw.h"
 
 
-int main() {
-    sf::RenderWindow window(sf::VideoMode(1920, 1080), "Box2D - segundo");
+int main() 
+{
+    uint64_t screenWidth = 1920;
+    uint64_t screenHeight = 1080;
+    double aspectRatio = (double)screenWidth / (double)screenHeight;
+    sf::RenderWindow window(sf::VideoMode(screenWidth, screenHeight), "Box2D - segundo");
     window.setFramerateLimit(60);
     if(!ImGui::SFML::Init(window, true))
     {
@@ -25,11 +29,13 @@ int main() {
     }
     ImGuiIO& io = ImGui::GetIO();
 
-    CSegundoDoc doc;
+    CSegundoDoc doc(aspectRatio);
     CSegundoVw view(&doc, window);
 
     sf::Clock deltaClock;
-    while (window.isOpen()) {
+    while (window.isOpen()) 
+    {
+
         sf::Event event;
         while (window.pollEvent(event)) {
             ImGui::SFML::ProcessEvent(window, event);
@@ -41,10 +47,8 @@ int main() {
 
         ImGui::SFML::Update(window, deltaClock.restart());
 
-        ImGui::ShowDemoWindow();
-
         window.clear();
-        if(ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
             view.OnLButtonDown(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
         }
@@ -65,10 +69,11 @@ int main() {
         // {
         //     view.OnRButtonUp(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
         // }
-        
+
         view.OnDraw(window);
         ImGui::SFML::Render(window);
         window.display();
+
     }
 
     ImGui::SFML::Shutdown();
