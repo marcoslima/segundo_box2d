@@ -48,9 +48,9 @@ protected:
 	void OnPointer(sf::Vector2i ptWhere);
 	void AddBox(sf::Vector2i ptWhere);
 	void AddCircle(sf::Vector2i ptWhere);
+	void AddHexagon(sf::Vector2i pt);
 	// void AddJoint(sf::Vector2i pt1, sf::Vector2i pt2);
 	// void AddVarBox(sf::Vector2i pt);
-	// void AddHexagon(sf::Vector2i pt);
 	void FinalizePoly(void);
 
 // Implementation
