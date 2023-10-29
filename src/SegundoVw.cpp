@@ -43,8 +43,41 @@ using namespace std;
 // 	ON_WM_MOUSEWHEEL()
 // END_MESSAGE_MAP()
 
-// CSegundoVw construction/destruction
 
+class QueryCallback : public b2QueryCallback
+{
+public:
+	QueryCallback(const b2Vec2& point)
+	{
+		m_point = point;
+		m_fixture = NULL;
+	}
+
+	bool ReportFixture(b2Fixture* fixture) override
+	{
+		b2Body* body = fixture->GetBody();
+		if (body->GetType() == b2_dynamicBody)
+		{
+			bool inside = fixture->TestPoint(m_point);
+			if (inside)
+			{
+				m_fixture = fixture;
+
+				// We are done, terminate the query.
+				return false;
+			}
+		}
+
+		// Continue the query.
+		return true;
+	}
+
+	b2Vec2 m_point;
+	b2Fixture* m_fixture;
+};
+
+
+// CSegundoVw construction/destruction
 CSegundoVw::CSegundoVw(CSegundoDoc *pDoc, sf::RenderWindow& window) :
 	  m_bRunning(true)
 	, m_toolbox()
@@ -440,6 +473,10 @@ void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)
 		// 	break;
 		}	
 	}
+	else if(IsPointer() && ImGui::IsKeyDown(ImGuiKey_Delete))
+	{
+		RemoveBody(point);
+	}
 }
 
 void CSegundoVw::OnRButtonDown(uint64_t nFlags, sf::Vector2i point)
@@ -521,56 +558,29 @@ void CSegundoVw::AddCircle(sf::Vector2i ptWhere)
 	body->SetType(b2_dynamicBody);
 }
 
-void CSegundoVw::OnPointer(sf::Vector2i ptWhere)
+b2Fixture* CSegundoVw::QueryFixture(b2Vec2 point)
 {
-	class QueryCallback : public b2QueryCallback
-	{
-	public:
-		QueryCallback(const b2Vec2& point)
-		{
-			m_point = point;
-			m_fixture = NULL;
-		}
-
-		bool ReportFixture(b2Fixture* fixture) override
-		{
-			b2Body* body = fixture->GetBody();
-			if (body->GetType() == b2_dynamicBody)
-			{
-				bool inside = fixture->TestPoint(m_point);
-				if (inside)
-				{
-					m_fixture = fixture;
-
-					// We are done, terminate the query.
-					return false;
-				}
-			}
-
-			// Continue the query.
-			return true;
-		}
-
-		b2Vec2 m_point;
-		b2Fixture* m_fixture;
-	};
-		
-	b2Vec2 p = DeviceToWorld(ptWhere);
-
 	b2Vec2 d(0.001f, 0.001f);
 	b2AABB aabb;
-	QueryCallback cb(p);
+	QueryCallback cb(point);
 
-	aabb.upperBound = p + d;
-	aabb.lowerBound = p - d;
+	aabb.upperBound = point + d;
+	aabb.lowerBound = point - d;
 	m_pDoc->m_pWorld->QueryAABB(&cb, aabb);
 
-	if(!cb.m_fixture) return;
+	return cb.m_fixture;
+}
+
+void CSegundoVw::OnPointer(sf::Vector2i ptWhere)
+{
+	b2Vec2 p = DeviceToWorld(ptWhere);
+	b2Fixture* fixture = QueryFixture(p);
+	if(!fixture) return;
 
 	float frequencyHz = 5.0f;
 	float dampingRatio = 0.7f;
 
-	b2Body* body = cb.m_fixture->GetBody();
+	b2Body* body = fixture->GetBody();
 	b2MouseJointDef jd;
 	jd.bodyA = m_pDoc->m_pGroundBody;
 	jd.bodyB = body;
@@ -595,6 +605,29 @@ void CSegundoVw::OnPointer(sf::Vector2i ptWhere)
 */
 }
 
+void CSegundoVw::RemoveBody(sf::Vector2i point)
+{
+	if(m_pGrabbed != nullptr)
+	{
+		if(m_pTempJoint != nullptr)
+		{
+			m_pDoc->m_pWorld->DestroyJoint(m_pTempJoint);
+			m_pTempJoint = nullptr;
+		}
+		m_pDoc->m_pWorld->DestroyBody(m_pGrabbed);
+		m_pGrabbed = nullptr;
+	}
+	else
+	{
+		b2Vec2 p = DeviceToWorld(point);
+		b2Fixture* fixture = QueryFixture(p);
+		if(fixture)
+		{
+			b2Body* body = fixture->GetBody();
+			m_pDoc->m_pWorld->DestroyBody(body);
+		}
+	}
+}
 
 #if 0
 void CSegundoVw::AddJoint(CPoint apt1, CPoint apt2)
@@ -647,8 +680,6 @@ void CSegundoVw::AddJoint(CPoint apt1, CPoint apt2)
 	pDoc->m_Wa.ReleaseWorld();
 }
 
-
-
 void CSegundoVw::OnSize(UINT nType, int cx, int cy)
 {
 	CView::OnSize(nType, cx, cy);
@@ -664,12 +695,6 @@ void CSegundoVw::OnSize(UINT nType, int cx, int cy)
 	CPaintDC dc(this);
 	m_bmpBb.CreateCompatibleBitmap(&dc,cx,cy);
 	Invalidate();
-}
-
-BOOL CSegundoVw::OnEraseBkgnd(CDC* pDC)
-{
-	//return CView::OnEraseBkgnd(pDC);
-	return TRUE;
 }
 
 void CSegundoVw::OnPointerStep(void)

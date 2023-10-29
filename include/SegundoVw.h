@@ -75,9 +75,10 @@ public:
 	afx_msg void OnObjetosHex();
 	afx_msg bool OnMouseWheel(uint64_t nFlags, short zDelta, sf::Vector2i pt);
 
-	void OnSimulacao(void);
 	void OnPointerStep(void);
-    
+	void RemoveBody(sf::Vector2i point);
+    b2Fixture* QueryFixture(b2Vec2 point);
+
 	sf::Vector2f DeviceToLogical(sf::Vector2i devicePoint);
 	b2Vec2 LogicalToWorld(sf::Vector2f);
     b2Vec2 DeviceToWorld(sf::Vector2i devicePoint);
