@@ -617,7 +617,7 @@ void CSegundoVw::OnPointer(sf::Vector2i ptWhere)
 	jd.bodyA = m_pDoc->m_pGroundBody;
 	jd.bodyB = body;
 	jd.target = p;
-	jd.maxForce = 1000.0f * body->GetMass();
+	jd.maxForce = 10000.0f * body->GetMass();
 	b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
 
 	m_pTempJoint = (b2MouseJoint*)m_pDoc->m_pWorld->CreateJoint(&jd);
@@ -626,15 +626,12 @@ void CSegundoVw::OnPointer(sf::Vector2i ptWhere)
 
 	ImGui::CaptureKeyboardFromApp(true);
 
-/*
-	CMainFrame *pFrm = (CMainFrame *)GetParentFrame();
-	pFrm->m_barObjPrm.m_fAngular = m_pGrabbed->m_angularVelocity;
-	pFrm->m_barObjPrm.m_fAtrito = m_pGrabbed->m_linearDamping;
-//	pFrm->m_barObjPrm.m_fElasticidade = m_pGrabbed->m_torque;
-	pFrm->m_barObjPrm.m_fLinear[0] = m_pGrabbed->m_linearVelocity.x;
-	pFrm->m_barObjPrm.m_fLinear[1] = m_pGrabbed->m_linearVelocity.y;
-	pFrm->m_barObjPrm.UpdateData(FALSE);
-*/
+	m_paramsBox.m_linear_velocity[0] = body->GetLinearVelocity().x;
+	m_paramsBox.m_linear_velocity[1] = body->GetLinearVelocity().y;
+	m_paramsBox.m_angular_velocity = body->GetAngularVelocity();
+	m_paramsBox.m_density = fixture->GetDensity();
+	m_paramsBox.m_friction = fixture->GetFriction();
+	m_paramsBox.m_restitution = fixture->GetRestitution();
 }
 
 void CSegundoVw::RemoveBody(sf::Vector2i point)
@@ -710,40 +707,6 @@ void CSegundoVw::AddJoint(CPoint apt1, CPoint apt2)
 
 	pWorld->CreateJoint(&jointDef);
 	pDoc->m_Wa.ReleaseWorld();
-}
-
-void CSegundoVw::OnSize(UINT nType, int cx, int cy)
-{
-	CView::OnSize(nType, cx, cy);
-
-	if(cx == 0 || cy == 0)
-		return;
-
-	if(m_bmpBb.m_hObject)
-	{
-		m_bmpBb.DeleteObject();
-	}
-
-	CPaintDC dc(this);
-	m_bmpBb.CreateCompatibleBitmap(&dc,cx,cy);
-	Invalidate();
-}
-
-void CSegundoVw::OnPointerStep(void)
-{
-	if(m_pTempJoint)
-	{
-		CPoint point;
-		GetCursorPos(&point);
-		ScreenToClient(&point);
-
-		CRect rc;
-		GetClientRect(rc);
-		if(!rc.PtInRect(point))
-			return;
-
-		m_pTempJoint->SetTarget(MakeLP(point));
-	}
 }
 
 void CSegundoVw::OnRButtonDown(UINT nFlags, CPoint point)

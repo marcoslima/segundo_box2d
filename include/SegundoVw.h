@@ -66,7 +66,6 @@ public:
 	afx_msg void OnMouseMove(bool bShift, sf::Vector2i point);
 	afx_msg void OnRButtonDown(uint64_t nFlags, sf::Vector2i point);
 
-	void OnPointerStep(void);
 	void RemoveBody(sf::Vector2i point);
     b2Fixture* QueryFixture(b2Vec2 point);
 
