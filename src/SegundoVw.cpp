@@ -51,7 +51,6 @@ CSegundoVw::CSegundoVw(CSegundoDoc *pDoc, sf::RenderWindow& window) :
 	, m_pGrabbed(nullptr)
 	, m_pTempJoint(nullptr)
 	, m_nCurPoly(0)
-	, m_dwStep(0)
     , m_pDoc(pDoc)
     , m_Window(window)
 	, m_bShowDemo(false)
@@ -281,15 +280,6 @@ void CSegundoVw::OnTimer(UINT nIDEvent)
 
 	CView::OnTimer(nIDEvent);
 }
-
-void CSegundoVw::OnSimulacao(void)
-{
-	CMainFrame *pFrm = (CMainFrame *)AfxGetMainWnd();
-	pFrm->m_barObjPrm.UpdateData();
-	pFrm->m_barObjPrm.m_dwStep = 1000.0/m_dwStep;
-	pFrm->m_barObjPrm.UpdateData(FALSE);
-	Invalidate();
-}
 #endif
 
 void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* fixture, const b2Transform& xf, b2Vec2 position, sf::Color crFill, sf::Color crCont)
@@ -450,6 +440,10 @@ void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)
 		// 	break;
 		}	
 	}
+}
+
+void CSegundoVw::OnRButtonDown(uint64_t nFlags, sf::Vector2i point)
+{
 }
 
 b2Vec2 CSegundoVw::LogicalToWorld(sf::Vector2f devicePoint)
@@ -678,51 +672,6 @@ BOOL CSegundoVw::OnEraseBkgnd(CDC* pDC)
 	return TRUE;
 }
 
-void CSegundoVw::OnObjetosBox()
-{
-	m_Tool = toolAddBox;
-}
-
-void CSegundoVw::OnObjetosCirculo()
-{
-	m_Tool = toolAddCircle;
-}
-
-void CSegundoVw::OnUpdateObjetosBox(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_Tool == toolAddBox);
-}
-
-void CSegundoVw::OnUpdateObjetosCirculo(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_Tool == toolAddCircle);
-}
-
-void CSegundoVw::OnUpdateObjetosPointer(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_Tool == toolPointer);
-}
-
-void CSegundoVw::OnObjetosPointer()
-{
-	m_Tool = toolPointer;
-}
-
-void CSegundoVw::OnObjetosJun()
-{
-	m_Tool = toolJoint;
-}
-
-void CSegundoVw::OnUpdateObjetosJun(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_Tool == toolJoint);
-}
-
-bool operator !=(b2Vec2 a, b2Vec2 b)
-{
-	return a.x != b.x || a.y != b.y;
-}
-
 void CSegundoVw::OnPointerStep(void)
 {
 	if(m_pTempJoint)
@@ -738,11 +687,6 @@ void CSegundoVw::OnPointerStep(void)
 
 		m_pTempJoint->SetTarget(MakeLP(point));
 	}
-}
-
-BOOL CSegundoVw::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
-{
-	return CView::OnSetCursor(pWnd, nHitTest, message);
 }
 
 void CSegundoVw::OnRButtonDown(UINT nFlags, CPoint point)
@@ -810,6 +754,10 @@ void CSegundoVw::AddVarBox(CPoint pt)
 void CSegundoVw::OnObjetosPolyline()
 {
 	m_Tool = toolAddPoly;
+}
+
+void CSegundoVw::OnKeyDown(uint64_t nChar, uint64_t nRepCnt, uint64_t nFlags)
+{
 }
 
 void CSegundoVw::OnUpdateObjetosPolyline(CCmdUI *pCmdUI)
