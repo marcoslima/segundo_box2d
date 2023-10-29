@@ -415,32 +415,41 @@ void CSegundoVw::OnLButtonClicked(uint64_t nFlags, sf::Vector2i point)
 	}
 }
 
+bool CSegundoVw::IsPointer()
+{
+	return m_toolbox.getCurrentTool() == ToolBox::TTool::toolPointer;
+}
+
+bool CSegundoVw::IsGrabbed()
+{
+	return m_pGrabbed != NULL;
+}
+
 void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)
 {
-	if(m_toolbox.getCurrentTool() == ToolBox::TTool::toolPointer && m_pGrabbed != NULL)
+	if(ImGui::IsMouseDown(ImGuiMouseButton_Left) && IsPointer() && IsGrabbed())
 	{
 		m_pTempJoint->SetTarget(DeviceToWorld(point));
 	}
 
-    // TODO: Completar aqui
-	// if(bShift  && ((CMainFrame *)GetParent())->m_barObjPrm.m_fDensidade != 0.0f)
-	// {
-	// 	switch(m_Tool)
-	// 	{
-	// 	case toolAddBox:
-	// 		AddBox(point);
-	// 		break;
-	// 	case toolAddHexagon:
-	// 		AddHexagon(point);
-	// 		break;
-	// 	case toolAddCircle:
-	// 		AddCircle(point);
-	// 		break;
-	// 	case toolAddPoly:
-	// 		OnAddPoly(point);
-	// 		break;
-	// 	}	
-	// }
+	if(bShift  && m_paramsBox.m_density != 0.0f)
+	{
+		switch(m_toolbox.getCurrentTool())
+		{
+		case ToolBox::TTool::toolAddBox:
+			AddBox(point);
+			break;
+		// case toolAddHexagon:
+		// 	AddHexagon(point);
+		// 	break;
+		case ToolBox::TTool::toolAddCircle:
+			AddCircle(point);
+			break;
+		// case toolAddPoly:
+		// 	OnAddPoly(point);
+		// 	break;
+		}	
+	}
 }
 
 b2Vec2 CSegundoVw::LogicalToWorld(sf::Vector2f devicePoint)
@@ -577,6 +586,7 @@ void CSegundoVw::OnPointer(sf::Vector2i ptWhere)
 
 	m_pTempJoint = (b2MouseJoint*)m_pDoc->m_pWorld->CreateJoint(&jd);
 	body->SetAwake(true);
+	m_pGrabbed = body;
 
 	ImGui::CaptureKeyboardFromApp(true);
 

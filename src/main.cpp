@@ -14,7 +14,6 @@
 #include "SegundoDoc.h"
 #include "SegundoVw.h"
 
-
 int main() 
 {
     uint64_t screenWidth = 1920;
@@ -33,6 +32,8 @@ int main()
     CSegundoVw view(&doc, window);
 
     sf::Clock deltaClock;
+    bool bMouseDown = false;
+    sf::Vector2i ptMouse, lastPtMouse;
     while (window.isOpen()) 
     {
 
@@ -48,31 +49,30 @@ int main()
         ImGui::SFML::Update(window, deltaClock.restart());
 
         window.clear();
+
+        ptMouse = sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y);
+
+        if(ptMouse != lastPtMouse)
+        {
+            view.OnMouseMove(io.KeyShift, ptMouse);
+        }
+        lastPtMouse = ptMouse;
+
+        if(! bMouseDown && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        {
+            bMouseDown = true;
+            view.OnLButtonDown(0, ptMouse);
+        }
+        if(bMouseDown && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        {
+            bMouseDown = false;
+            view.OnLButtonUp(0, ptMouse);
+        }
+
         if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
-            view.OnLButtonClicked(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
+            view.OnLButtonClicked(0, ptMouse);
         }
-        if(ImGui::IsMouseDown)
-        {
-            view.OnLButtonDown(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
-        }
-        if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-        {
-            view.OnLButtonUp(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
-        }
-        if(ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-        {
-            view.OnMouseMove(io.KeyShift, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
-        }
-        if(ImGui::IsMouseDragging(ImGuiMouseButton_Right))
-        {
-            view.OnMouseMove(io.KeyShift, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
-        }
-        // TODO: Completar aqui
-        // if(ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-        // {
-        //     view.OnRButtonUp(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
-        // }
 
         view.OnDraw(window);
         ImGui::SFML::Render(window);

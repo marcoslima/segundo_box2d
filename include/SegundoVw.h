@@ -80,8 +80,8 @@ public:
 	afx_msg void OnLButtonUp(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnLButtonDown(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnLButtonClicked(uint64_t nFlags, sf::Vector2i point);
-	afx_msg void OnObjetosPointer();
-	afx_msg void OnObjetosJun();
+    afx_msg void OnObjetosPointer();
+    afx_msg void OnObjetosJun();
 	afx_msg void OnMouseMove(bool bShift, sf::Vector2i point);
 	afx_msg void OnRButtonDown(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnRButtonUp(uint64_t nFlags, sf::Vector2i point);
@@ -106,4 +106,7 @@ public:
 
 	void ProcessSounds(void);
 	void OnAddPoly(sf::Vector2i point);
+    bool IsPointer();
+	bool IsGrabbed();
+
 };
