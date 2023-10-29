@@ -69,6 +69,23 @@ ELSE()
     )
 ENDIF()
 
+# Build the Box2D library
+IF(NOT EXISTS "${BOX2D_PATH}/build")
+    execute_process(
+        COMMAND mkdir ${BOX2D_PATH}/build
+    )
+ENDIF()
+IF(NOT EXISTS "${BOX2D_PATH}/build/bin/libbox2d.a")
+    execute_process(
+        WORKING_DIRECTORY ${BOX2D_PATH}/build
+        COMMAND cmake .. -DBOX2D_BUILD_DOCS=OFF
+    )
+    execute_process(
+        WORKING_DIRECTORY ${BOX2D_PATH}/build
+        COMMAND cmake --build . -j20
+    )
+ENDIF()
+
 # Add include directories for the Box2D library
 target_include_directories(imgui PUBLIC ${BOX2D_PATH}/include)
 
