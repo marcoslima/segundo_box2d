@@ -7,6 +7,7 @@ b2PolygonShape makeHorizontalGroundBox(float width)
 {
 	b2PolygonShape groundBoxDefH;
 	groundBoxDefH.SetAsBox(width, 1.0f);
+	groundBoxDefH.m_radius = 0.5f;
 	return groundBoxDefH;
 }
 
@@ -14,6 +15,7 @@ b2PolygonShape makeVerticalGroundBox(float height)
 {
 	b2PolygonShape groundBoxDefV;
     groundBoxDefV.SetAsBox(1.0f, height);
+	groundBoxDefV.m_radius = 0.5f;
 	return groundBoxDefV;
 }
 
