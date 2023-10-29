@@ -60,20 +60,11 @@ public:
 
 public:
 	afx_msg void OnSimulaAtivada();
-	afx_msg void OnObjetosBox();
-	afx_msg void OnObjetosCirculo();
 	afx_msg void OnLButtonUp(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnLButtonDown(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnLButtonClicked(uint64_t nFlags, sf::Vector2i point);
-    afx_msg void OnObjetosPointer();
-    afx_msg void OnObjetosJun();
 	afx_msg void OnMouseMove(bool bShift, sf::Vector2i point);
 	afx_msg void OnRButtonDown(uint64_t nFlags, sf::Vector2i point);
-	afx_msg void OnObjetosBoxVar();
-	afx_msg void OnObjetosPolyline();
-	afx_msg void OnKeyDown(uint64_t nChar, uint64_t nRepCnt, uint64_t nFlags);
-	afx_msg void OnObjetosHex();
-	afx_msg bool OnMouseWheel(uint64_t nFlags, short zDelta, sf::Vector2i pt);
 
 	void OnPointerStep(void);
 	void RemoveBody(sf::Vector2i point);
@@ -88,7 +79,6 @@ public:
 	sf::Vector2i WorldToDevice(b2Vec2 worldPoint);
 
 	void ProcessSounds(void);
-	void OnAddPoly(sf::Vector2i point);
     bool IsPointer();
 	bool IsGrabbed();
 
