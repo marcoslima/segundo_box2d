@@ -181,7 +181,7 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 			DrawShape(window, s, xf, position, crFill, crStroke);
 		}
 	}
-	m_maxImpulse = maxImpulse;
+	// m_maxImpulse = maxImpulse;
 
 
 #if 0
@@ -312,17 +312,23 @@ void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* fixture, c
 		if(true)
 		{
 			const b2CircleShape* circle = (const b2CircleShape*)shape;
-			b2Vec2 center = b2Mul(xf, circle->m_p);
+			sf::Vector2f center = WorldToLogical(b2Mul(xf, circle->m_p));
 			float r = WorldToLogical(b2Vec2(circle->m_radius, 0)).x;
             sf::CircleShape circle_shape(r);
-            circle_shape.setPosition(WorldToLogical(center) - WorldToLogical(b2Vec2(r, r)));
+            circle_shape.setPosition(center - WorldToLogical(b2Vec2(r, r)));
             circle_shape.setFillColor(crFill);
             circle_shape.setOutlineColor(crCont);
             circle_shape.setOutlineThickness(0.2f);
 
             window.draw(circle_shape);
-			cout << "Position: " << center.x << ", " << center.y << endl;
-			cout << "Radius: " << r << endl;
+
+			sf::Vector2f circle_pos = WorldToLogical(b2Mul(xf, circle->m_p + (circle->m_radius * b2Vec2(1.0f, 0))));
+			sf::Vertex line[] =
+			{
+				sf::Vertex(circle_pos, crCont),
+				sf::Vertex(center, crCont)
+			};
+			window.draw(line, 2, sf::Lines);
 
 			// b2Vec2 ax = circle->m_R.col1;
 			// pDc->MoveTo(x.x,x.y);
@@ -371,6 +377,16 @@ void CSegundoVw::OnLButtonUp(uint64_t nFlags, sf::Vector2i point)
 	// }
 }
 
+void CSegundoVw::OnLButtonDown(uint64_t nFlags, sf::Vector2i point)
+{
+	switch(m_toolbox.getCurrentTool())
+	{
+	case ToolBox::TTool::toolPointer:
+		OnPointer(point);
+		break;
+	}
+}
+
 void CSegundoVw::OnLButtonClicked(uint64_t nFlags, sf::Vector2i point)
 {
 	if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow))
@@ -381,9 +397,6 @@ void CSegundoVw::OnLButtonClicked(uint64_t nFlags, sf::Vector2i point)
 	switch(m_toolbox.getCurrentTool())
 	{
     // TODO: Completar aqui
-	// case ToolBox::TTool::toolPointer:
-	// 	OnPointer(point);
-	// 	break;
 	case ToolBox::TTool::toolAddBox:
 		AddBox(point);
 		break;
@@ -404,10 +417,9 @@ void CSegundoVw::OnLButtonClicked(uint64_t nFlags, sf::Vector2i point)
 
 void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)
 {
-	if(!m_bRunning && m_toolbox.getCurrentTool() == ToolBox::TTool::toolPointer && m_pGrabbed != NULL)
+	if(m_toolbox.getCurrentTool() == ToolBox::TTool::toolPointer && m_pGrabbed != NULL)
 	{
-		// TODO: Completar aqui
-		// m_pGrabbed->SetXForm(DeviceToWorld(point), m_pGrabbed->GetAngle());
+		m_pTempJoint->SetTarget(DeviceToWorld(point));
 	}
 
     // TODO: Completar aqui
@@ -503,7 +515,82 @@ void CSegundoVw::AddCircle(sf::Vector2i ptWhere)
 
 	b2Body* body = m_pDoc->m_pWorld->CreateBody(&bodyDef);
 	body->CreateFixture(&fixdef);
-	body->SetType(b2_dynamicBody);}
+	body->SetType(b2_dynamicBody);
+}
+
+void CSegundoVw::OnPointer(sf::Vector2i ptWhere)
+{
+	class QueryCallback : public b2QueryCallback
+	{
+	public:
+		QueryCallback(const b2Vec2& point)
+		{
+			m_point = point;
+			m_fixture = NULL;
+		}
+
+		bool ReportFixture(b2Fixture* fixture) override
+		{
+			b2Body* body = fixture->GetBody();
+			if (body->GetType() == b2_dynamicBody)
+			{
+				bool inside = fixture->TestPoint(m_point);
+				if (inside)
+				{
+					m_fixture = fixture;
+
+					// We are done, terminate the query.
+					return false;
+				}
+			}
+
+			// Continue the query.
+			return true;
+		}
+
+		b2Vec2 m_point;
+		b2Fixture* m_fixture;
+	};
+		
+	b2Vec2 p = DeviceToWorld(ptWhere);
+
+	b2Vec2 d(0.001f, 0.001f);
+	b2AABB aabb;
+	QueryCallback cb(p);
+
+	aabb.upperBound = p + d;
+	aabb.lowerBound = p - d;
+	m_pDoc->m_pWorld->QueryAABB(&cb, aabb);
+
+	if(!cb.m_fixture) return;
+
+	float frequencyHz = 5.0f;
+	float dampingRatio = 0.7f;
+
+	b2Body* body = cb.m_fixture->GetBody();
+	b2MouseJointDef jd;
+	jd.bodyA = m_pDoc->m_pGroundBody;
+	jd.bodyB = body;
+	jd.target = p;
+	jd.maxForce = 1000.0f * body->GetMass();
+	b2LinearStiffness(jd.stiffness, jd.damping, frequencyHz, dampingRatio, jd.bodyA, jd.bodyB);
+
+	m_pTempJoint = (b2MouseJoint*)m_pDoc->m_pWorld->CreateJoint(&jd);
+	body->SetAwake(true);
+
+	ImGui::CaptureKeyboardFromApp(true);
+
+/*
+	CMainFrame *pFrm = (CMainFrame *)GetParentFrame();
+	pFrm->m_barObjPrm.m_fAngular = m_pGrabbed->m_angularVelocity;
+	pFrm->m_barObjPrm.m_fAtrito = m_pGrabbed->m_linearDamping;
+//	pFrm->m_barObjPrm.m_fElasticidade = m_pGrabbed->m_torque;
+	pFrm->m_barObjPrm.m_fLinear[0] = m_pGrabbed->m_linearVelocity.x;
+	pFrm->m_barObjPrm.m_fLinear[1] = m_pGrabbed->m_linearVelocity.y;
+	pFrm->m_barObjPrm.UpdateData(FALSE);
+*/
+}
+
 
 #if 0
 void CSegundoVw::AddJoint(CPoint apt1, CPoint apt2)
@@ -556,58 +643,7 @@ void CSegundoVw::AddJoint(CPoint apt1, CPoint apt2)
 	pDoc->m_Wa.ReleaseWorld();
 }
 
-void CSegundoVw::OnPointer(CPoint ptWhere)
-{
-	CPrimeiroDoc* pDoc = GetDocument();
 
-	b2Vec2 p = MakeLP(ptWhere);
-
-	b2AABB aabb;
-	aabb.minVertex.Set(p.x-.01f,p.y-.01f);
-	aabb.maxVertex.Set(p.x+.01f,p.y+.01f);
-	b2Shape *shape;
-	b2World *pWorld = pDoc->m_Wa.GetWorld();
-	int32 count = pWorld->Query(aabb,&shape,1);
-	if(count == 0 || shape->GetBody() == pWorld->GetGroundBody() || !shape->TestPoint(p))
-	{
-		pDoc->m_Wa.ReleaseWorld();
-		m_pGrabbed = NULL;
-		return;
-	}
-
-	m_pGrabbed = shape->GetBody();
-
-	if(m_bRunning)
-	{
-		b2Vec2 vecAnchor;
-		vecAnchor = p;
-		m_pGrabbed->GetLocalPoint(p);
-
-		b2MouseJointDef jointDef;
-		jointDef.body1 = pWorld->GetGroundBody();
-		jointDef.body2 = m_pGrabbed;
-		jointDef.target = vecAnchor;
-		jointDef.maxForce = 100000.0f * m_pGrabbed->m_mass;
-		if(m_pTempJoint != NULL)
-		{
-			pWorld->DestroyJoint(m_pTempJoint);
-		}
-
-		m_pTempJoint = (b2MouseJoint *)pWorld->CreateJoint(&jointDef);
-	}
-	m_pGrabbed->WakeUp();
-	SetCapture();
-	pDoc->m_Wa.ReleaseWorld();
-/*
-	CMainFrame *pFrm = (CMainFrame *)GetParentFrame();
-	pFrm->m_barObjPrm.m_fAngular = m_pGrabbed->m_angularVelocity;
-	pFrm->m_barObjPrm.m_fAtrito = m_pGrabbed->m_linearDamping;
-//	pFrm->m_barObjPrm.m_fElasticidade = m_pGrabbed->m_torque;
-	pFrm->m_barObjPrm.m_fLinear[0] = m_pGrabbed->m_linearVelocity.x;
-	pFrm->m_barObjPrm.m_fLinear[1] = m_pGrabbed->m_linearVelocity.y;
-	pFrm->m_barObjPrm.UpdateData(FALSE);
-*/
-}
 
 void CSegundoVw::OnSize(UINT nType, int cx, int cy)
 {

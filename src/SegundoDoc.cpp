@@ -54,6 +54,8 @@ CSegundoDoc::CSegundoDoc(float aspectRatio)
 	bodies[1]->CreateFixture(&groundBoxDefH, 0.0f);
 	bodies[2]->CreateFixture(&groundBoxDefV, 0.0f);
 	bodies[3]->CreateFixture(&groundBoxDefV, 0.0f);
+
+	m_pGroundBody = bodies[0];
 }
 
 CSegundoDoc::~CSegundoDoc()

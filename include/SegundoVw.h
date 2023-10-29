@@ -56,16 +56,6 @@ protected:
 	// void AddHexagon(sf::Vector2i pt);
 	void FinalizePoly(void);
 
-// Vento!
-public:
-    b2BodyDef m_bodyDefAr;
-	b2CircleShape m_circle_def;
-
-	float m_maxVel;
-	float m_maxRot;
-	float m_maxEne;
-	float m_maxImpulse;
-
 // Implementation
 public:
     CSegundoVw(CSegundoDoc* pDoc, sf::RenderWindow& window);
@@ -83,11 +73,12 @@ public:
 
 	afx_msg void OnSimulaAtivada();
 	afx_msg void OnTimer(uint64_t nIDEvent);
-	afx_msg void OnLButtonUp(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnSize(uint64_t nType, int cx, int cy);
 	afx_msg bool OnEraseBkgnd(sf::RenderWindow& window);
 	afx_msg void OnObjetosBox();
 	afx_msg void OnObjetosCirculo();
+	afx_msg void OnLButtonUp(uint64_t nFlags, sf::Vector2i point);
+	afx_msg void OnLButtonDown(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnLButtonClicked(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnObjetosPointer();
 	afx_msg void OnObjetosJun();

@@ -52,6 +52,10 @@ int main()
         {
             view.OnLButtonClicked(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
         }
+        if(ImGui::IsMouseDown)
+        {
+            view.OnLButtonDown(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));
+        }
         if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
         {
             view.OnLButtonUp(0, sf::Vector2i(ImGui::GetMousePos().x, ImGui::GetMousePos().y));

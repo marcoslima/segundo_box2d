@@ -15,4 +15,6 @@ public:
 	ImVec4	m_crBack;
 	b2Vec2 m_world_top_left;
 	b2Vec2 m_world_size;
+	b2Body *m_pGroundBody;
+
 };
