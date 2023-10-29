@@ -432,9 +432,9 @@ void CSegundoVw::OnLButtonClicked(uint64_t nFlags, sf::Vector2i point)
 	// case ToolBox::TTool::toolVarBox:
 	// 	AddVarBox(point);
 	// 	break;
-	// case ToolBox::TTool::toolAddHexagon:
-	// 	AddHexagon(point);
-	// 	break;
+	case ToolBox::TTool::toolAddHexagon:
+		AddHexagon(point);
+		break;
 	}
 }
 
@@ -462,9 +462,9 @@ void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)
 		case ToolBox::TTool::toolAddBox:
 			AddBox(point);
 			break;
-		// case toolAddHexagon:
-		// 	AddHexagon(point);
-		// 	break;
+		case ToolBox::TTool::toolAddHexagon:
+			AddHexagon(point);
+			break;
 		case ToolBox::TTool::toolAddCircle:
 			AddCircle(point);
 			break;
@@ -518,6 +518,7 @@ void CSegundoVw::AddBox(sf::Vector2i ptWhere)
 	b2PolygonShape boxDef;
 	boxDef.SetAsBox(m_paramsBox.m_size[0], m_paramsBox.m_size[1]);
 	boxDef.m_centroid.Set(0.0f, 0.0f);
+	boxDef.m_radius = 0.5f;
 
 	b2BodyDef bodyDef;
     bodyDef.position = DeviceToWorld(ptWhere);
@@ -556,6 +557,37 @@ void CSegundoVw::AddCircle(sf::Vector2i ptWhere)
 	b2Body* body = m_pDoc->m_pWorld->CreateBody(&bodyDef);
 	body->CreateFixture(&fixdef);
 	body->SetType(b2_dynamicBody);
+}
+
+#define RAD(a) (a*M_PI/180.0)
+void CSegundoVw::AddHexagon(sf::Vector2i pt)
+{
+	b2PolygonShape hexagonShape;
+	b2Vec2 pCenter = DeviceToWorld(pt);
+	b2Vec2 vertices[6];
+	for(int i= 0; i < 6; i++)
+	{
+		vertices[i].Set(cos(RAD(60*i)) * m_paramsBox.m_size[0],
+						sin(RAD(60*i)) * m_paramsBox.m_size[0]);
+	}
+	hexagonShape.Set(vertices, 6);
+	hexagonShape.m_radius = 0.5f;
+
+	b2FixtureDef fixtureDef;
+	fixtureDef.density = m_paramsBox.m_density;
+	fixtureDef.friction = m_paramsBox.m_friction;
+	fixtureDef.restitution = m_paramsBox.m_restitution;
+	fixtureDef.shape = &hexagonShape;
+	
+	b2BodyDef bodyDef;
+	bodyDef.position = pCenter;
+	bodyDef.angularVelocity = m_paramsBox.m_angular_velocity;
+	bodyDef.linearVelocity.Set(m_paramsBox.m_linear_velocity[0],
+							   m_paramsBox.m_linear_velocity[1]);
+	bodyDef.type = b2_dynamicBody;
+	b2Body* body = m_pDoc->m_pWorld->CreateBody(&bodyDef);
+	body->CreateFixture(&fixtureDef);
+
 }
 
 b2Fixture* CSegundoVw::QueryFixture(b2Vec2 point)
@@ -723,21 +755,6 @@ void CSegundoVw::OnRButtonDown(UINT nFlags, CPoint point)
 	CView::OnRButtonDown(nFlags, point);
 }
 
-void CSegundoVw::OnRButtonUp(UINT nFlags, CPoint point)
-{
-	CView::OnRButtonUp(nFlags, point);
-}
-
-void CSegundoVw::OnObjetosBoxVar()
-{
-	m_toolbox.setCurrentTool(ToolBox::TTool::toolAddBox);
-}
-
-void CSegundoVw::OnUpdateObjetosBoxVar(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_Tool == toolVarBox);
-}
-
 #pragma warning( disable : 4244 )
 void CSegundoVw::AddVarBox(CPoint pt)
 {
@@ -773,30 +790,6 @@ void CSegundoVw::AddVarBox(CPoint pt)
 		if(!m_bRunning)
 			Invalidate();
 	}
-}
-#pragma warning( default: 4244 )
-
-void CSegundoVw::OnObjetosPolyline()
-{
-	m_Tool = toolAddPoly;
-}
-
-void CSegundoVw::OnKeyDown(uint64_t nChar, uint64_t nRepCnt, uint64_t nFlags)
-{
-}
-
-void CSegundoVw::OnUpdateObjetosPolyline(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_Tool == toolAddPoly);
-}
-void CSegundoVw::OnObjetosHex()
-{
-	m_Tool = toolAddHexagon;
-}
-
-void CSegundoVw::OnUpdateObjetosHex(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_Tool == toolAddHexagon);
 }
 
 void CSegundoVw::FinalizePoly(void)
@@ -890,37 +883,6 @@ void CSegundoVw::OnAddPoly(CPoint point)
 		Invalidate();
 }
 
-#define RAD(a) (a*M_PI/180.0)
-void CSegundoVw::AddHexagon(CPoint pt)
-{
-	CMainFrame *pFrm = (CMainFrame *)AfxGetMainWnd();
-	pFrm->m_barObjPrm.UpdateData();
-	
-	b2PolyDef polydef;
-	polydef.density = pFrm->m_barObjPrm.m_fDensidade;
-	polydef.friction = pFrm->m_barObjPrm.m_fAtrito;
-	polydef.restitution = pFrm->m_barObjPrm.m_fElasticidade;
-	polydef.vertexCount = 6;
-	b2Vec2 pCenter = MakeLP(pt);
-	for(int i= 0; i < 6; i++)
-	{
-		polydef.vertices[i].Set(cos(RAD(60*i))*pFrm->m_barObjPrm.m_fDim[0],
-								sin(RAD(60*i))*pFrm->m_barObjPrm.m_fDim[1]);
-	}
-	
-	b2BodyDef bodyDef;
-	bodyDef.position = pCenter;
-	bodyDef.angularVelocity = pFrm->m_barObjPrm.m_fAngular;
-	bodyDef.linearVelocity.Set( pFrm->m_barObjPrm.m_fLinear[0],
-								pFrm->m_barObjPrm.m_fLinear[1]);
-	bodyDef.AddShape(&polydef);
-
-	GetDocument()->m_Wa.GetWorld()->CreateBody(&bodyDef);
-	GetDocument()->m_Wa.ReleaseWorld();
-
-	if(!m_bRunning)
-		Invalidate();
-}
 
 
 BOOL CSegundoVw::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
