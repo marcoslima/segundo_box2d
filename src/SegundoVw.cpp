@@ -120,7 +120,7 @@ void CSegundoVw::OnDraw(sf::RenderWindow& window)
 		ImGui::Checkbox("Show toolbox", &m_bShowToolbox);
 		ImGui::SameLine();
 		ImGui::Checkbox("Show params box", &m_bShowParamsBox);
-		ImGui::SameLine();
+		// ImGui::SameLine();
 		ImGui::Checkbox("Show demo window", &m_bShowDemo);
 
 		if(m_bShowToolbox) m_toolbox.draw();
@@ -148,27 +148,37 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 	vector<b2Body*> vecDel;
 	b2World *pWorld = m_pDoc->m_pWorld;
 	sf::Color crFill,crStroke;
-	float maxImpulse = 0;
-	b2Contact *cn;
-	float fImpulses = 0;
-	vector<pair<CPoint,CPoint> > vecContacts;
-	vector<CPoint> vecPontCont;
-
-    // for(b2Contact* cn = pWorld->GetPairCount GetContactList(); cn; cn = cn->GetNext())
+	float fMaxMomentum = 0;
+	float fMomentum = 0;
+    // for(b2Contact* cn = pWorld->GetContactList() ; cn ; cn = cn->GetNext())
     // {
-	// 	fImpulses = 0;
-	// 	for(cn = b->GetContactList(); cn; cn = cn->next)
+	// 	b2WorldManifold worldManifold;
+	// 	cn->GetWorldManifold(&worldManifold);
+	// 	float normal = worldManifold.normal.Length();
+
+	// 	if(normal > 0.0f)
 	// 	{
-	// 		fImpulses += cn->contact->GetManifolds()->points->normalImpulse;
+	// 		b2MassData massData;
+	// 		b2Body* bodyA = cn->GetFixtureA()->GetBody();
+	// 		cn->GetFixtureA()->GetMassData(&massData);
+	// 		fMomentum += massData.mass * bodyA->GetLinearVelocity().Length();
 	// 	}
-	// 	fImpulses /= b->GetMass();
-	// 	maxImpulse = max(fImpulses,maxImpulse);
+	// 	fMaxMomentum = max(fMaxMomentum, fMomentum);
     // }
+	if(m_paramsBox.m_bShowMomentum)
+	{
+		for (b2Body* b = pWorld->GetBodyList(); b; b = b->GetNext())
+		{
+			fMomentum = b->GetLinearVelocity().Length() * b->GetMass();
+			fMaxMomentum = max(fMaxMomentum, fMomentum);
+		}
+	}
 
 	for (b2Body* b = pWorld->GetBodyList(); b; b = b->GetNext())
 	{
 		const b2Transform& xf = b->GetTransform();
 		b2Vec2 position = b->GetPosition();
+		fMomentum = b->GetLinearVelocity().Length() * b->GetMass();
 
 		if(!b->IsAwake())
 		{
@@ -195,9 +205,15 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 			}
 			else
 			{
-				crFill = sf::Color(fImpulses * 255.0f / maxImpulse,
-							       fImpulses * 255.0f / maxImpulse,
-							       fImpulses * 255.0f / maxImpulse);
+				if(m_paramsBox.m_bShowMomentum)
+				{
+					float color = fMomentum * 255.0f / fMaxMomentum;
+					crFill = sf::Color(color, color, color);
+				}
+				else
+				{
+					crFill = sf::Color(255,255,240);
+				}
 			}
 
 			// Stroke:
