@@ -203,7 +203,7 @@ sf::Color CSegundoVw::CComputeFillColor::GetFill(b2Fixture* pFixture)
 		}
 		else
 		{
-			crFill = sf::Color(255,255,240);
+			crFill = sf::Color(200,200,255);
 		}
 	}
 	return crFill;
@@ -264,7 +264,11 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 		const b2Transform& xf = b->GetTransform();
 		b2Vec2 position = b->GetPosition();
 		
-		CComputeFillColor computeFillColor(fMaxImpulse, fMaxMomentum, m_pGrabbed, m_paramsBox.m_bShowMomentum, m_paramsBox.m_bShowImpulses);
+		CComputeFillColor computeFillColor(fMaxImpulse, 
+										   fMaxMomentum, 
+										   m_pGrabbed, 
+										   m_paramsBox.m_bShowMomentum, 
+										   m_paramsBox.m_bShowImpulses);
 
 		for (b2Fixture* s = b->GetFixtureList(); s; s = s->GetNext())
 		{
@@ -312,77 +316,38 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
     #endif
 }
 
-// CSegundoVw message handlers
-void CSegundoVw::OnSimulaAtivada()
-{
-	m_bRunning = ! m_bRunning;
-}
-
-#if 0
-void CSegundoVw::OnUpdateSimulaAtivada(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_bRunning);
-}
-
-void CSegundoVw::OnTimer(UINT nIDEvent)
-{
-	if(nIDEvent == IDT_SIMULACAO)
-	{
-		KillTimer(IDT_SIMULACAO);
-		if(m_Tool == toolPointer && m_pGrabbed != NULL)
-		{
-			OnPointerStep();
-		}
-		OnSimulacao();
-		SetTimer(IDT_SIMULACAO,25,NULL);
-	}
-
-	CView::OnTimer(nIDEvent);
-}
-#endif
-
-void CSegundoVw::DrawShape(sf::RenderWindow& window, const b2Fixture* fixture, const b2Transform& xf, b2Vec2 position, sf::Color crFill, sf::Color crCont)
+void CSegundoVw::DrawShape(sf::RenderWindow& window, 
+						   const b2Fixture* fixture, 
+						   const b2Transform& xf, 
+						   b2Vec2 position, 
+						   sf::Color crFill, 
+						   sf::Color crCont)
 {
 	const b2Shape* shape = fixture->GetShape();
 	b2Shape::Type shapeType = shape->GetType();
 	switch (shapeType)
 	{
 	case b2Shape::Type::e_circle:
-		if(false)
+	{
+		const b2CircleShape* circle = (const b2CircleShape*)shape;
+		sf::Vector2f center = WorldToLogical(b2Mul(xf, circle->m_p));
+		float r = WorldToLogical(b2Vec2(circle->m_radius, 0)).x;
+		sf::CircleShape circle_shape(r);
+		circle_shape.setPosition(center - WorldToLogical(b2Vec2(r, r)));
+		circle_shape.setFillColor(crFill);
+		circle_shape.setOutlineColor(crCont);
+		circle_shape.setOutlineThickness(0.2f);
+
+		window.draw(circle_shape);
+
+		sf::Vector2f circle_pos = WorldToLogical(b2Mul(xf, circle->m_p + (circle->m_radius * b2Vec2(1.0f, 0))));
+		sf::Vertex line[] =
 		{
-			// const b2CircleShape* circle = (const b2CircleShape*)shape;
-			// b2Vec2 x = circle->m_position;
-			// float32 r = circle->m_radius;
-			// pDc->Ellipse(x.x-r,x.y-r,x.x+r,x.y+r);
-			// pDc->MoveTo(x.x,x.y);
-			// b2Vec2 ax = circle->m_R.col1;
-			// pDc->LineTo(x.x + r * ax.x, x.y + r * ax.y);
-		}
-		if(true)
-		{
-			const b2CircleShape* circle = (const b2CircleShape*)shape;
-			sf::Vector2f center = WorldToLogical(b2Mul(xf, circle->m_p));
-			float r = WorldToLogical(b2Vec2(circle->m_radius, 0)).x;
-            sf::CircleShape circle_shape(r);
-            circle_shape.setPosition(center - WorldToLogical(b2Vec2(r, r)));
-            circle_shape.setFillColor(crFill);
-            circle_shape.setOutlineColor(crCont);
-            circle_shape.setOutlineThickness(0.2f);
-
-            window.draw(circle_shape);
-
-			sf::Vector2f circle_pos = WorldToLogical(b2Mul(xf, circle->m_p + (circle->m_radius * b2Vec2(1.0f, 0))));
-			sf::Vertex line[] =
-			{
-				sf::Vertex(circle_pos, crCont),
-				sf::Vertex(center, crCont)
-			};
-			window.draw(line, 2, sf::Lines);
-
-			// b2Vec2 ax = circle->m_R.col1;
-			// pDc->MoveTo(x.x,x.y);
-			// pDc->LineTo(x.x + r * ax.x, x.y + r * ax.y);
-		}
+			sf::Vertex(circle_pos, crCont),
+			sf::Vertex(center, crCont)
+		};
+		window.draw(line, 2, sf::Lines);
+	}
 		break;
 
 	case b2Shape::Type::e_polygon:
@@ -445,22 +410,22 @@ void CSegundoVw::OnLButtonClicked(uint64_t nFlags, sf::Vector2i point)
 
 	switch(m_toolbox.getCurrentTool())
 	{
-    // TODO: Completar aqui
 	case ToolBox::TTool::toolAddBox:
 		AddBox(point);
 		break;
 	case ToolBox::TTool::toolAddCircle:
 		AddCircle(point);
 		break;
+	case ToolBox::TTool::toolAddHexagon:
+		AddHexagon(point);
+		break;
+    // TODO: Completar aqui
 	// case ToolBox::TTool::toolJoint:
 	// 	AddJoint(point,point);
 	// 	break;
 	// case ToolBox::TTool::toolVarBox:
 	// 	AddVarBox(point);
 	// 	break;
-	case ToolBox::TTool::toolAddHexagon:
-		AddHexagon(point);
-		break;
 	}
 }
 
@@ -507,6 +472,11 @@ void CSegundoVw::OnMouseMove(bool bShift, sf::Vector2i point)
 
 void CSegundoVw::OnRButtonDown(uint64_t nFlags, sf::Vector2i point)
 {
+	// TODO: Completar aqui
+	// if(m_toolbox.getCurrentTool() == ToolBox::TTool::toolAddPoly && m_nCurPoly > 0)
+	// {
+	// 	FinalizePoly();
+	// }
 }
 
 b2Vec2 CSegundoVw::LogicalToWorld(sf::Vector2f devicePoint)
@@ -735,15 +705,6 @@ void CSegundoVw::AddJoint(CPoint apt1, CPoint apt2)
 	pDoc->m_Wa.ReleaseWorld();
 }
 
-void CSegundoVw::OnRButtonDown(UINT nFlags, CPoint point)
-{
-	if(m_Tool == toolAddPoly && m_nCurPoly > 0)
-	{
-		FinalizePoly();
-	}
-	CView::OnRButtonDown(nFlags, point);
-}
-
 #pragma warning( disable : 4244 )
 void CSegundoVw::AddVarBox(CPoint pt)
 {
@@ -839,28 +800,6 @@ void CSegundoVw::ProcessSounds(void)
 {
 }
 
-void CSegundoVw::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
-{
-	if(nChar == VK_DELETE && m_pGrabbed != NULL)
-	{
-		
-		{b2World *pWorld = GetDocument()->m_Wa.GetWorld();
-		if(m_pTempJoint != NULL)
-		{
-			pWorld->DestroyJoint(m_pTempJoint);
-			m_pTempJoint = NULL;
-		}
-		pWorld->DestroyBody(m_pGrabbed);
-		GetDocument()->m_Wa.ReleaseWorld();}
-
-		m_pGrabbed = NULL;
-
-		if(!m_bRunning) Invalidate();
-	}
-
-	CView::OnKeyDown(nChar, nRepCnt, nFlags);
-}
-
 void CSegundoVw::OnAddPoly(CPoint point)
 {
 	m_ptPoly[m_nCurPoly++] = point;
@@ -871,8 +810,6 @@ void CSegundoVw::OnAddPoly(CPoint point)
 	if(!m_bRunning)
 		Invalidate();
 }
-
-
 
 BOOL CSegundoVw::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {

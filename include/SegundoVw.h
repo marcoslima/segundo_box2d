@@ -88,7 +88,6 @@ public:
 	~CSegundoVw();
 
 public:
-	afx_msg void OnSimulaAtivada();
 	afx_msg void OnLButtonUp(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnLButtonDown(uint64_t nFlags, sf::Vector2i point);
 	afx_msg void OnLButtonClicked(uint64_t nFlags, sf::Vector2i point);
