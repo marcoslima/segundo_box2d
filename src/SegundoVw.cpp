@@ -140,6 +140,90 @@ void CSegundoVw::OnDraw(sf::RenderWindow& window)
 	}
 }
 
+void CSegundoVw::DrawTempJoint(sf::RenderWindow& window)
+{
+	if(m_pTempJoint == NULL) return;
+
+	sf::Vector2f p = WorldToLogical(m_pTempJoint->GetAnchorA());
+	sf::Vector2f p2 = WorldToLogical(m_pTempJoint->GetAnchorB());
+	float size = 2.0f;
+	sf::Vertex line[] =
+	{
+		sf::Vertex(p - sf::Vector2f(-size, -size)),
+		sf::Vertex(p - sf::Vector2f( size,  size)),
+		sf::Vertex(p - sf::Vector2f(-size,  size)),
+		sf::Vertex(p - sf::Vector2f( size, -size)),
+	};
+	window.draw(line, 4, sf::Lines);
+}
+
+float CSegundoVw::CComputeFillColor::GetImpulseSum(b2Body* pBody)
+{
+	float fImpulse = 0;
+	for(b2ContactEdge* cn = pBody->GetContactList(); cn; cn = cn->next)
+	{
+		b2Manifold *manifold = cn->contact->GetManifold();
+		for(int i = 0; i < manifold->pointCount; i++)
+		{
+			fImpulse += manifold->points[i].normalImpulse;
+		}
+	}
+	return fImpulse;
+}
+
+sf::Color CSegundoVw::CComputeFillColor::GetFill(b2Fixture* pFixture)
+{
+	sf::Color crFill;
+	b2Body* b = pFixture->GetBody();
+	float fMomentum = b->GetLinearVelocity().Length() * b->GetMass();
+	if(!b->IsAwake() && b->GetType() != b2_staticBody)
+	{
+		crFill = sf::Color::Red;
+	}
+	else if(b == m_pGrabbed)
+	{
+		crFill = sf::Color(255,255,128);
+	}
+	else if(b->GetType() == b2_staticBody)
+	{
+		crFill = sf::Color(192,192,192);
+	}
+	else
+	{
+		if(m_bShowMomentum)
+		{
+			float color = fMomentum * 255.0f / m_fMaxMomentum;
+			crFill = sf::Color(color, color, color);
+		}
+		else if(m_bShowImpulses)
+		{
+			float fImpulse = GetImpulseSum(b);
+			float color = fImpulse * 255.0f / m_fMaxImpulse;
+			crFill = sf::Color(color, color, color);
+		}
+		else
+		{
+			crFill = sf::Color(255,255,240);
+		}
+	}
+	return crFill;
+}
+
+sf::Color CSegundoVw::CComputeFillColor::GetStroke(b2Fixture* pFixture)
+{
+	b2Body* b = pFixture->GetBody();
+
+	if(b == m_pGrabbed)
+	{
+		return sf::Color::Green;
+	}
+	else
+	{
+		return sf::Color::White;
+	}
+}
+
+
 void CSegundoVw::Draw(sf::RenderWindow& window)
 {
 	// CCronometro cr;
@@ -179,94 +263,19 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 	{
 		const b2Transform& xf = b->GetTransform();
 		b2Vec2 position = b->GetPosition();
-		fMomentum = b->GetLinearVelocity().Length() * b->GetMass();
+		
+		CComputeFillColor computeFillColor(fMaxImpulse, fMaxMomentum, m_pGrabbed, m_paramsBox.m_bShowMomentum, m_paramsBox.m_bShowImpulses);
 
-		if(!b->IsAwake())
-		{
-			// vecDel.push_back(b);
-		}
 		for (b2Fixture* s = b->GetFixtureList(); s; s = s->GetNext())
 		{
-			// FILL:
-			if(!b->IsAwake() && b->GetType() != b2_staticBody)
-			{
-				crFill = sf::Color::Red;
-			}
-			else if(b == m_pGrabbed)
-			{
-				crFill = sf::Color(255,255,128);
-			}
-			else if(!b->IsAwake())
-			{
-				crFill = sf::Color(s->GetRestitution() * 255, 0, 0);
-			}
-			else if(b->GetType() == b2_staticBody)
-			{
-				crFill = sf::Color(192,192,192);
-			}
-			else
-			{
-				if(m_paramsBox.m_bShowMomentum)
-				{
-					float color = fMomentum * 255.0f / fMaxMomentum;
-					crFill = sf::Color(color, color, color);
-				}
-				else if(m_paramsBox.m_bShowImpulses)
-				{
-					fImpulse = 0;
-					for(b2ContactEdge* cn = s->GetBody()->GetContactList(); cn; cn = cn->next)
-					{
-						b2Manifold *manifold = cn->contact->GetManifold();
-						for(int i = 0; i < manifold->pointCount; i++)
-						{
-							fImpulse += manifold->points[i].normalImpulse;
-						}
-					}
-
-					float color = fImpulse * 255.0f / fMaxImpulse;
-					crFill = sf::Color(color, color, color);
-				}
-				else
-				{
-					crFill = sf::Color(255,255,240);
-				}
-			}
-
-			// Stroke:
-			if(b == m_pGrabbed)
-			{
-				crStroke = sf::Color::Green;
-			}
-			else
-			{
-				crStroke = sf::Color::White;
-			}
-
+			// Compute fill color:
+			crFill = computeFillColor.GetFill(s);
+			crStroke = computeFillColor.GetStroke(s);
 			DrawShape(window, s, xf, position, crFill, crStroke);
 		}
 	}
 
-	// Removemos todos os objetos congelados:
-	for(size_t i = 0; i < vecDel.size(); i++)
-	{
-		if(vecDel[i] != m_pGrabbed )
-			pWorld->DestroyBody(vecDel[i]);
-	}
-
-	if(m_pTempJoint != NULL)
-	{
-		sf::Vector2f p = WorldToLogical(m_pTempJoint->GetAnchorA());
-		sf::Vector2f p2 = WorldToLogical(m_pTempJoint->GetAnchorB());
-		float size = 2.0f;
-		sf::Vertex line[] =
-		{
-			sf::Vertex(p - sf::Vector2f(-size, -size)),
-			sf::Vertex(p - sf::Vector2f( size,  size)),
-			sf::Vertex(p - sf::Vector2f(-size,  size)),
-			sf::Vertex(p - sf::Vector2f( size, -size)),
-		};
-		window.draw(line, 4, sf::Lines);
-	}
+	DrawTempJoint(window);
 
 #if 0
 	b2Vec2 jp;

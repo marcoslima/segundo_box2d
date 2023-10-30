@@ -11,6 +11,35 @@
 
 class CSegundoVw
 {
+private:
+	class CComputeFillColor
+	{
+	private:
+		float m_fMaxImpulse;
+		float m_fMaxMomentum;
+		b2Body* m_pGrabbed;
+		bool m_bShowMomentum;
+		bool m_bShowImpulses;
+
+	private:
+		float GetImpulseSum(b2Body* pBody);
+
+	public:
+		CComputeFillColor(float fMaxImpulse, float fMaxMomentum, b2Body* pGrabbed, bool bShowMomentum, bool bShowImpulses)
+		: m_fMaxImpulse(fMaxImpulse)
+		, m_fMaxMomentum(fMaxMomentum)
+		, m_pGrabbed(pGrabbed)
+		, m_bShowMomentum(bShowMomentum)
+		, m_bShowImpulses(bShowImpulses)
+		{
+		}
+
+		sf::Color GetFill(b2Fixture* pFixture);
+		sf::Color GetStroke(b2Fixture* pFixture);
+	};
+private:
+	void DrawTempJoint(sf::RenderWindow& window);
+	sf::Color GetFillColor(b2Fixture* pFixture);
 // Attributes
 public:
     ParamsBox m_paramsBox;
