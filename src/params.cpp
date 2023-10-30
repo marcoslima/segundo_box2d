@@ -11,6 +11,7 @@ ParamsBox::ParamsBox() :
     m_restitution(0.5f),
     m_gravity{0.0f, 10.0f},
     m_bShowMomentum(false),
+    m_bShowImpulses(false),
     m_bOpen(true)
 {
 }
@@ -40,5 +41,6 @@ void ParamsBox::draw(void)
     ImGui::Text("World Parameters");
     ImGui::SliderFloat2("Gravity", m_gravity, -100.0f, 100.0f);
     ImGui::Checkbox("Show Momentum", &m_bShowMomentum);
+    ImGui::Checkbox("Show Impulses", &m_bShowImpulses);
     ImGui::EndChild();
 }

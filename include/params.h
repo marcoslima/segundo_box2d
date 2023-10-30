@@ -13,6 +13,7 @@ public:
     float m_restitution;
     float m_gravity[2];
     bool m_bShowMomentum;
+    bool m_bShowImpulses;
     bool m_bOpen;
 public:
     ParamsBox();

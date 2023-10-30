@@ -150,21 +150,22 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 	sf::Color crFill,crStroke;
 	float fMaxMomentum = 0;
 	float fMomentum = 0;
-    // for(b2Contact* cn = pWorld->GetContactList() ; cn ; cn = cn->GetNext())
-    // {
-	// 	b2WorldManifold worldManifold;
-	// 	cn->GetWorldManifold(&worldManifold);
-	// 	float normal = worldManifold.normal.Length();
+	float fImpulse = 0;
+	float fMaxImpulse = 0;
 
-	// 	if(normal > 0.0f)
-	// 	{
-	// 		b2MassData massData;
-	// 		b2Body* bodyA = cn->GetFixtureA()->GetBody();
-	// 		cn->GetFixtureA()->GetMassData(&massData);
-	// 		fMomentum += massData.mass * bodyA->GetLinearVelocity().Length();
-	// 	}
-	// 	fMaxMomentum = max(fMaxMomentum, fMomentum);
-    // }
+	if(m_paramsBox.m_bShowImpulses)
+	{
+		for(b2Contact* cn = pWorld->GetContactList() ; cn ; cn = cn->GetNext())
+		{
+			b2Manifold *manifold = cn->GetManifold();
+			for(int i = 0; i < manifold->pointCount; i++)
+			{
+				fImpulse = manifold->points[i].normalImpulse;
+				fMaxImpulse = max(fMaxImpulse, fImpulse);
+			}
+		}
+	}
+
 	if(m_paramsBox.m_bShowMomentum)
 	{
 		for (b2Body* b = pWorld->GetBodyList(); b; b = b->GetNext())
@@ -208,6 +209,21 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 				if(m_paramsBox.m_bShowMomentum)
 				{
 					float color = fMomentum * 255.0f / fMaxMomentum;
+					crFill = sf::Color(color, color, color);
+				}
+				else if(m_paramsBox.m_bShowImpulses)
+				{
+					fImpulse = 0;
+					for(b2ContactEdge* cn = s->GetBody()->GetContactList(); cn; cn = cn->next)
+					{
+						b2Manifold *manifold = cn->contact->GetManifold();
+						for(int i = 0; i < manifold->pointCount; i++)
+						{
+							fImpulse += manifold->points[i].normalImpulse;
+						}
+					}
+
+					float color = fImpulse * 255.0f / fMaxImpulse;
 					crFill = sf::Color(color, color, color);
 				}
 				else
