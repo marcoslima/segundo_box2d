@@ -245,27 +245,6 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 			DrawShape(window, s, xf, position, crFill, crStroke);
 		}
 	}
-	// m_maxImpulse = maxImpulse;
-
-
-#if 0
-	pDc->BeginPath();
-	for(size_t i = 0; i < vecContacts.size(); i++)
-	{
-		pDc->MoveTo(vecContacts[i].first);
-		pDc->LineTo(vecContacts[i].second);
-	}
-	for(size_t i = 0; i < vecPontCont.size(); i++)
-	{
-		pDc->Ellipse(vecPontCont[i].x-1,vecPontCont[i].y-1,
-					 vecPontCont[i].x+1,vecPontCont[i].y+1);
-	}
-
-	pDc->EndPath();
-	CPen penCont(PS_SOLID,1,RGB(255,0,0)), *pOldPen = pDc->SelectObject(&penCont);
-	pDc->StrokePath();
-	pDc->SelectObject(pOldPen);
-#endif
 
 	// Removemos todos os objetos congelados:
 	for(size_t i = 0; i < vecDel.size(); i++)
@@ -274,16 +253,22 @@ void CSegundoVw::Draw(sf::RenderWindow& window)
 			pWorld->DestroyBody(vecDel[i]);
 	}
 
-#if 0
 	if(m_pTempJoint != NULL)
 	{
-		b2Vec2 p = m_pTempJoint->GetAnchor1();
-		pDc->MoveTo(p.x-1,p.y-1);
-		pDc->LineTo(p.x+1,p.y+1);
-		pDc->MoveTo(p.x-1,p.y+1);
-		pDc->LineTo(p.x+1,p.y-1);
+		sf::Vector2f p = WorldToLogical(m_pTempJoint->GetAnchorA());
+		sf::Vector2f p2 = WorldToLogical(m_pTempJoint->GetAnchorB());
+		float size = 2.0f;
+		sf::Vertex line[] =
+		{
+			sf::Vertex(p - sf::Vector2f(-size, -size)),
+			sf::Vertex(p - sf::Vector2f( size,  size)),
+			sf::Vertex(p - sf::Vector2f(-size,  size)),
+			sf::Vertex(p - sf::Vector2f( size, -size)),
+		};
+		window.draw(line, 4, sf::Lines);
 	}
 
+#if 0
 	b2Vec2 jp;
 	for(b2Joint* j = pWorld->m_jointList; j; j = j->m_next)
 	{
